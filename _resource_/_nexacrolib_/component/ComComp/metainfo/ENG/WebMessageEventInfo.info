@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaInfo version="2.0">
+  <Object id="nexacro.WebMessageEventInfo">
+    <ObjectInfo finalclass="false" inheritance="" classname="nexacro.WebMessageEventInfo" shorttypename="" csstypename="" csscontrolname="" group="Object" subgroup="EventInfo" csspseudo="" container="false" composite="false" tabstop="false" cssstyle="false" contents="false" formats="false" contentseditor="" defaultwidth="" defaultheight="" registration="deny" edittype="" useinitvalue="false" popup="false" edittypecomponent="" dblclickevent="" requirement="Edge,Chrome,Safari,Firefox,Opera,Android Default Web Browser,iOS/iPadOS Default Web Browser" description="The EventInfo object passed to the onmessage event when a message is sent from the web page loaded in the WebView component to the Nexacro side." a11yprop="" />
+    <PropertyInfo>
+      <Property name="data" group="" subgroup="" refreshinfo="" displayinfo="" edittype="" readonly="true" initonly="false" hidden="false" control="false" expr="false" bind="false" deprecated="false" unused="false" mandatory="false" objectinfo="" enuminfo="" enuminfo2="" unitinfo="" delimiter="" requirement="Edge,Chrome,Safari,Firefox,Opera,Android Default Web Browser,iOS/iPadOS Default Web Browser" description="This is a read-only property that holds the message data transmitted by Nexacro." csspropertyname="" normalpropertyname="data" stringrc="false" defaultstringrc="false" />
+      <Property name="eventid" group="Eventinfo" subgroup="" refreshinfo="" displayinfo="" edittype="" readonly="true" initonly="false" hidden="false" control="false" expr="false" bind="false" deprecated="false" unused="false" mandatory="false" objectinfo="" enuminfo="" enuminfo2="" unitinfo="" delimiter="" requirement="Edge,Chrome,Safari,Firefox,Opera,Android Default Web Browser,iOS/iPadOS Default Web Browser" description="This read-only property holds the ID of an event." csspropertyname="" normalpropertyname="eventid" stringrc="false" defaultstringrc="false" />
+      <Property name="origin" group="" subgroup="" refreshinfo="" displayinfo="" edittype="" readonly="true" initonly="false" hidden="false" control="false" expr="false" bind="false" deprecated="false" unused="false" mandatory="false" objectinfo="" enuminfo="" enuminfo2="" unitinfo="" delimiter="" requirement="Edge,Chrome,Safari,Firefox,Opera,Android Default Web Browser,iOS/iPadOS Default Web Browser" description="This is a read-only property that contains the Origin of the webpage that sent the message." csspropertyname="" normalpropertyname="origin" stringrc="false" defaultstringrc="false" />
+      <Property name="source" group="" subgroup="" refreshinfo="" displayinfo="" edittype="" readonly="true" initonly="false" hidden="false" control="false" expr="false" bind="false" deprecated="false" unused="false" mandatory="false" objectinfo="" enuminfo="" enuminfo2="" unitinfo="" delimiter="" requirement="Edge,Chrome,Safari,Firefox,Opera,Android Default Web Browser,iOS/iPadOS Default Web Browser" description="This is a read-only property that contains the window object of the web page that sent the message." csspropertyname="" normalpropertyname="source" stringrc="false" defaultstringrc="false" />
+    </PropertyInfo>
+    <CSSInfo>
+      <PropertyInfo />
+    </CSSInfo>
+    <StatusInfo />
+    <ControlInfo />
+    <MethodInfo />
+    <EventHandlerInfo />
+  </Object>
+</MetaInfo>

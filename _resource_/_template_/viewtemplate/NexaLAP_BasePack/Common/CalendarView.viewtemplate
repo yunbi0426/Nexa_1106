@@ -1,0 +1,1088 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ViewTemplateInfo version="2.0">
+  <ViewTemplate id="CalendarView" viewtype="Others" description_en="description of the view template"/>
+  <Script version="1.0" type="xscript5.1"><![CDATA[/************************************************************************************************
+*  @FileName 	CalendarView
+*  @Creator 	Tobesoft
+*  @CreateDate 	2026.01.02
+*  @Desction    
+*  @Version		1.0.0.0
+*************************************************************************************************
+*  Revision History
+*************************************************************************************************
+*  Date          		Modifier                Description
+*************************************************************************************************
+*  YYYY.MM.DD     		Author       	        Initial creation
+************************************************************************************************/
+/************************************************************************************************
+ * Include Declarations
+ ************************************************************************************************/
+ 	include "../_lib_/util.xjs";
+	include "../_lib_/basicCommon.xjs";
+/************************************************************************************************
+ * Variable Definitions
+ ************************************************************************************************/
+	//viewTemplate use cssclass
+	this.TITLE_CSSCLASS = "sta_MF_title";
+	this.DATE_DIV_CSSCLASS = "div_WF_Search";
+	this.YEAR_MONTH_CSSCLASS = "sta_MF_title";
+
+	//Overall top position
+	this.TOP_POSITION = 0;
+
+	//Title area size
+	this.TITLE_HEIGHT = 38;	
+
+	//Date display area size
+	this.DATE_AREA_HEIGHT = 50;
+	//-------------------------------------------------------------------------------------------
+	// View-related constants
+	//-------------------------------------------------------------------------------------------
+
+	// Default layout configuration
+	this.COMPONENT_WIDTH = 100;	// Default width of components
+	this.COMPONENT_HEIGHT = 32;	// Default height of components
+
+
+	this.LEFT_POSITION = 15;
+
+	// Template-specific layout configuration
+
+
+	this.COMPONENT_HGAP = 5;
+	this.COMPONENT_VGAP = 5;
+
+	// title text default value
+	this.TITLE_TEXT = "";	
+	// field default width value
+	this.FIELD_WIDTH = "300";
+	// label default width value(label default size + right margin)
+	this.LABEL_SIZE = 131;
+
+	//-------------------------------------------------------------------------------------------
+	// View-related variables
+	//-------------------------------------------------------------------------------------------
+	// List of model fields
+	this.oFieldArray;
+
+	// Existing contents (including <View> element)
+	this.oContents;
+	this.arrBindItems = [];
+		
+	// Properties for view
+	this.oViewProperties;
+
+/************************************************************************************************
+ * Required Function Area for NexaLAP Studio
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     	: set_viewProperties
+	* Return       	: List of view generation attributes (JSON format)
+	* Description 	: Defines the attributes applied to the overall view during view generation.
+	*---------------------------------------------------------------------------------------------*/
+	this.set_viewProperties = function() {
+		let sViewAttr = "";
+		let oViewAttr = {"attributes" : []};
+		let oProperties = {};
+
+		//Title useYN setting
+		oProperties={};
+		oProperties.id 				= "titleUse";
+		oProperties.displaytext 	= "Title use";
+		oProperties.edittype 		= "Boolean";
+		oProperties.defaultvalue 	= "false";
+		oProperties.description 	= "Sets whether to display the title.";
+		oProperties.group			= "Title";
+		oViewAttr.attributes.push(oProperties);
+		
+		//Title text properties
+		oProperties={};
+		oProperties.id 				= "titletext";
+		oProperties.displaytext 	= "Title text";
+		oProperties.edittype 		= "String";
+		oProperties.defaultvalue 	= this.TITLE_TEXT;
+		oProperties.description 	= "Set the title text (Other fields will not be created if title text is not entered)";
+		oProperties.group			= "Title";
+		oViewAttr.attributes.push(oProperties);
+
+		sViewAttr = JSON.stringify(oViewAttr, null, "\t");
+		// nexacro.trace(">> sViewAttr : " + sViewAttr);
+
+		return sViewAttr;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : set_fieldProperties
+	* Return       : List of field-level attributes for view generation (JSON format)
+	* Description  : Defines the attributes applied to each model field during view generation.
+	*---------------------------------------------------------------------------------------------*/
+	this.set_fieldProperties = function() {
+		let sFieldAttr = "";
+		let oFieldAttr = {"attributes": []};
+
+		sFieldAttr = JSON.stringify(oFieldAttr, null, "\t");
+		// nexacro.trace(">> sFieldAttr : " + sFieldAttr);
+
+		return sFieldAttr;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	 * Function    	: main
+	 * Parameters  	:
+	 * 				 - fieldarray     : List of model fields
+	 *  			 - contents       : Existing contents (including <View> element)
+	 *  			 - viewproperties : Attributes for view generation
+	 * Return      	: View definition (source + script) in JSON format
+	 * Description	: Generates the view based on the model fields and returns the result.
+	 *---------------------------------------------------------------------------------------------*
+	 *                        !!! This function is required by NexaLAP Studio. !!!                 *
+	 *                        !!! Do not remove or rename this function. !!!                       *
+	 *---------------------------------------------------------------------------------------------*/
+	this.main = function(fieldarray, contents, viewproperties) {	
+			
+		let sResult = "";
+
+		// nexacro.trace(">> fieldarray : " + fieldarray);
+		// nexacro.trace(">> contents : " + contents);
+		// nexacro.trace(">> viewproperties : " + viewproperties);
+
+		// Convert the data into a JSON object
+		if(fieldarray) {
+			this.oFieldArray = JSON.parse(fieldarray);
+		}
+
+		// Set View Component Information as JSON Object
+		if(contents) {
+			this.oContents = JSON.parse(contents);
+
+			// Initialize Model Information
+			this.oContents.View.Model = [];
+			
+			// Initialize View layout
+			this.oContents.View.View[0].tag = "Layouts";
+			this.oContents.View.View[0].Layouts = [];
+		}
+		
+		// Set Option Setting Information as JSON Object
+		if(viewproperties) {
+			this.oViewProperties = JSON.parse(viewproperties);
+		}
+		// Generate model information
+		this.oContents.View.Model = this.fn_GetModel();
+
+		// When binding is required for the selected field list, the viewdataset must be set.
+		this.oContents.View.attribute.viewdataset = "${VIEW_DATASET}";
+
+		// Generate initValue information
+		this.oContents.View.InitValue = this.fn_GetInitValue();
+
+		// Generate object information
+		this.oContents.View.Objects = this.fn_GetObjects();
+
+		// Generate bind information
+		this.oContents.View.Bind = this.fn_GetBind();
+
+		// Generate script information
+		this.oContents.View.Script = this.fn_GetScript();
+
+		// Convert the view definition to a JSON string
+		sResult = JSON.stringify(this.oContents, null, "\t");
+//nexacro.trace(">> sResult : " + sResult);
+
+		return sResult;
+	};
+
+/************************************************************************************************
+ * Functions Related to the main() Execution Flow
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetModel
+	* Return       : model contents (JSON format)
+	* Description  : Function to generate a component source based on field information of the model entered by the user
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetModel = function() {
+	
+		var oModel = [];	
+
+		// Generate the title area
+		const useTitle = this.oViewProperties.attributes.titleUse;
+		if(useTitle == "true"){
+			this.fn_MakeTitleArea(oModel);
+		}
+
+		//Calendar year/month display and events
+		this._fn_makeDate(oModel);
+
+		// Generate the contents
+		this._fn_makeCalendar(oModel);
+
+		// Return the model information to be generated
+		return oModel;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetInitValue
+	* Parameter    :
+	* Return       : initvalue contents (JSON format)
+	* Description  : Function to generate <InitValue> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetInitValue = function(){
+
+		let oInitValue = [];
+
+		return oInitValue;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetObjects
+	* Return       : objects contents (JSON format)
+	* Description  : Function to generate <Objects> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetObjects = function() {
+		
+		//Initialize Object
+		var oObjects = [];
+
+		return oObjects;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetBind
+	* Return       : bind contents (JSON format)
+	* Description  : Function to generate <Bind> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetBind = function()
+	{
+		let sBindDataset = "${VIEW_DATASET}";
+		let oBind = [];
+		let oBindItems = [];
+
+		let sCompId
+		let sFieldId;
+		let sCompType;
+		let sCompClassId;
+		let nBindItemCount = this.arrBindItems.length;
+
+		for(let i=0;i<nBindItemCount;i++)
+		{
+			sCompId			= this.arrBindItems[i].compid;
+			sFieldId		= this.arrBindItems[i].fieldid;
+			sCompType		= this.arrBindItems[i].comptype;
+			sCompClassId	= this.arrBindItems[i].compclassid;
+
+			let oBindItem = {};
+			oBindItem.tag = "BindItem";
+			oBindItem.attribute = {};
+			oBindItem.attribute.id = "bind_"+sCompId;
+			oBindItem.attribute.compid = sCompId;
+			
+			sPropid = "value";
+			if(sCompClassId=="Static" || sCompType == "static"){
+				sPropid = "text";
+			} else if(sCompClassId=="ImageViewer" || sCompType == "imageviewer"){
+				sPropid = "image";
+			} else if(sCompClassId=="WebView" || sCompClassId=="WebBrowser" || sCompType == "webview" || sCompType == "webbrowser"){
+				sPropid = "url";
+			} else if(sCompClassId=="AbstractSelectAny" || sCompType == "selectany"){
+				sPropid = "multivalue";
+			}
+			oBindItem.attribute.propid = sPropid;
+			oBindItem.attribute.datasetid = sBindDataset;
+			oBindItem.attribute.columnid = sFieldId;
+
+			oBindItems[i] = oBindItem;
+		}
+
+		oBind[oBind.length] = {
+			"tag" : "Bind", 
+			"Bind" : oBindItems
+		};
+
+		return oBind;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetScript
+	* Return       : script contents (JSON format)
+	* Description  : Function to generate <Script> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetScript = function() {
+
+		//Initialize Script Information
+		let oScript = {};
+		let sValue = "this._fnViewOnLoad = "
+					+ nexacro.replaceAll(nexacro.replaceAll(nexacro.replaceAll(this._fnViewOnLoad.toString(),"\r",""),"\n",""),"\t","")
+					+ ";";
+			sValue = sValue + "this._cfn_calendarInit = "
+					+ nexacro.replaceAll(nexacro.replaceAll(nexacro.replaceAll(this._cfn_calendarInit.toString(),"\r",""),"\n",""),"\t","")
+					+ ";";
+			sValue = sValue + "this._cfn_makeCalendar = "
+					+ nexacro.replaceAll(nexacro.replaceAll(nexacro.replaceAll(this._cfn_makeCalendar.toString(),"\r",""),"\n",""),"\t","")
+					+ ";";
+
+		oScript =
+		{
+			"tag": "Script",
+			"attribute": { "type" : "xscript5.1" },
+			"value": sValue
+		}
+
+		return oScript;
+	};
+
+/*===============================================================================================*/
+/* Model Generation Related Functions                                                            */	
+/*===============================================================================================*/	
+	this.fn_MakeTitleArea = function(model){
+		let oModel = model;
+
+		let sText		= this.oViewProperties.attributes.titletext;
+		if(!this.lfn_IsNull(sText)){
+			oModel[oModel.length] = {"fieldid" : "","Components" : []};
+
+			let oTitle = {};
+			oTitle.tag = "Static";
+			oTitle.attribute = {};
+			oTitle.attribute.id = "sta_title";
+			oTitle.attribute.left = 0;
+			oTitle.attribute.top = 0;
+			oTitle.attribute.width = 300;
+			oTitle.attribute.height = this.TITLE_HEIGHT;
+			oTitle.attribute.text = sText;
+			oTitle.attribute.cssclass = this.TITLE_CSSCLASS;
+
+			oModel[oModel.length-1].Components.push(oTitle);
+
+			this.TITLE_COMP= "sta_title";		
+		}
+
+		this.TOP_POSITION =  nexacro.toNumber(this.TOP_POSITION) + nexacro.toNumber(this.TITLE_HEIGHT);
+	};
+	
+	//Create calendar year/month display area
+	this._fn_makeDate = function(model){
+		let oModel = model;
+		oModel[oModel.length] = {"fieldid" : "","Components" : []};
+
+		let aLayout = new Array();
+
+		//Center-aligned component
+		let oComponents = {};
+		oComponents.tag = "Static";
+		oComponents.attribute = {};
+		oComponents.attribute.id = "sta_standard";
+		oComponents.attribute.left = "50%";		
+		oComponents.attribute.top = 0;
+		oComponents.attribute.width = 1;
+		oComponents.attribute.bottom = 0;
+		oComponents.attribute.visible = false;
+		aLayout.push(oComponents);
+
+
+		//Year/month display component
+		oComponents = {};
+		oComponents.tag = "Static";
+		oComponents.attribute = {};
+		oComponents.attribute.id = "sta_Date";
+		oComponents.attribute.left = "sta_standard:-60";		
+		oComponents.attribute.top = 5;
+		oComponents.attribute.width = 120;
+		oComponents.attribute.bottom = 5;
+		let sToDay = this._fn_getToDay();
+		oComponents.attribute.text = sToDay.substr(0,4) + "." + sToDay.substr(4,2);
+		oComponents.attribute.sDate = sToDay;
+		oComponents.attribute.textAlign = "center";
+		oComponents.attribute.cssclass = this.YEAR_MONTH_CSSCLASS;
+		aLayout.push(oComponents);	
+
+		//Previous month navigation component
+		oComponents = {};
+		oComponents.tag = "Button";
+		oComponents.attribute = {};
+		oComponents.attribute.id = "btn_monthPrev";
+		oComponents.attribute.left = "sta_Date:-155";		
+		oComponents.attribute.top = 5;
+		oComponents.attribute.width = 30;
+		oComponents.attribute.bottom = 5;
+		aLayout.push(oComponents);
+		
+		//Previous year navigation component
+		oComponents = {};
+		oComponents.tag = "Button";
+		oComponents.attribute = {};
+		oComponents.attribute.id = "btn_yearPrev";
+		oComponents.attribute.left = "sta_Date:-190";		
+		oComponents.attribute.top = 5;
+		oComponents.attribute.width = 30;
+		oComponents.attribute.bottom = 5;
+		aLayout.push(oComponents);
+
+		//Next month navigation component
+		oComponents = {};
+		oComponents.tag = "Button";
+		oComponents.attribute = {};
+		oComponents.attribute.id = "btn_monthNext";
+		oComponents.attribute.left = "sta_Date:5";		
+		oComponents.attribute.top = 5;
+		oComponents.attribute.width = 30;
+		oComponents.attribute.bottom = 5;
+		aLayout.push(oComponents);	
+
+		//Next year navigation component
+		oComponents = {};
+		oComponents.tag = "Button";
+		oComponents.attribute = {};
+		oComponents.attribute.id = "btn_yearNext";
+		oComponents.attribute.left = "sta_Date:40";		
+		oComponents.attribute.top = 5;
+		oComponents.attribute.width = 30;
+		oComponents.attribute.bottom = 5;
+		aLayout.push(oComponents);	
+
+		//More view component
+		oComponents = {};
+		oComponents.tag = "Button";
+		oComponents.attribute = {};
+		oComponents.attribute.id = "btn_Daily";
+		oComponents.attribute.top = 5;
+		oComponents.attribute.width = 50;
+		oComponents.attribute.right = 5;		
+		oComponents.attribute.bottom = 5;
+		oComponents.attribute.text = "More";
+		aLayout.push(oComponents);
+
+		let oLayout= [{"tag" : "Layout","Layout" : aLayout}];
+		let oLayouts= [{"tag" : "Layouts","Layouts" : oLayout}];
+
+		let oBgDiv = {};
+		oBgDiv.tag = "Div";
+		oBgDiv.attribute = {};
+		oBgDiv.attribute.id = "div_bgDate";
+		oBgDiv.attribute.left = 0;
+		oBgDiv.attribute.top = this.TOP_POSITION;
+
+		oBgDiv.attribute.height = this.DATE_AREA_HEIGHT;		
+		oBgDiv.attribute.right = 0;
+		oBgDiv.attribute.cssclass = this.DATE_DIV_CSSCLASS;
+		oBgDiv.attribute._fieldid = "bgDate";
+		oBgDiv.attribute._fieldcomptype = "label";
+		oBgDiv.Div =oLayouts;
+		
+		oModel[oModel.length-1].Components.push(oBgDiv);
+
+		this.TOP_POSITION = this.TOP_POSITION + this.DATE_AREA_HEIGHT + 10;
+	};
+
+	this._fn_makeCalendar = function(model){
+		let oModel = model;
+		oModel[oModel.length] = {"fieldid" : "","Components" : []};
+
+		//Get View Component Width value
+		let nViewCompWidth = this.oContents.View.referenceinfo.realwidth;
+ 		let nCellWidth = nexacro.round(nexacro.round(nViewCompWidth/7,2)/nViewCompWidth*100,2);
+
+		let oHead = {};
+		let aYoil = new Array("Sun","Mon","Tue","Wed","Thu","Fri","Sat");
+		let nLeft = 0;
+		for(let i = 0 ; i < 7 ; i++){
+			oHead = {};
+			oHead.tag = "Static";
+			oHead.attribute = {};
+			oHead.attribute.id = "sta_head_" + i;
+			oHead.attribute.top = this.TOP_POSITION;
+			oHead.attribute.height = 30;
+			oHead.attribute.text = aYoil[i];
+			oHead.attribute.textAlign = "center";
+			//oHead.attribute.border = "1px solid #aaaaaa";
+			if(i== 0){
+				oHead.attribute.left = nLeft;				
+				oHead.attribute.width = nCellWidth + "%";
+				oHead.attribute.cssclass = this.TITLE_CSSCLASS;
+			} else if(i==6){
+				oHead.attribute.left = "sta_head_" + (i-1) +":-1";
+				oHead.attribute.right = 0;
+				oHead.attribute.cssclass = this.TITLE_CSSCLASS;
+			} else {
+				oHead.attribute.left = "sta_head_" + (i-1) +":-1";
+				oHead.attribute.width = nCellWidth + "%";
+				oHead.attribute.cssclass = this.TITLE_CSSCLASS;
+			}
+			
+			oModel[oModel.length-1].Components.push(oHead);
+		}
+		this.TOP_POSITION = this.TOP_POSITION + 30;
+
+		//Get View Component Height value
+		let nViewCompHeight = this.oContents.View.referenceinfo.realheight;
+		let nCalendarHeight = this.oContents.View.referenceinfo.realheight - this.TOP_POSITION - 2;
+
+		let sToDay = "20260202";//this._fn_getToDay();
+ 		//Day-of-week number for the 1st
+ 		let nDayNum = nexacro.toNumber(this._fn_getDay(sToDay.substr(0,6)+"01"));
+		
+ 		//Last day of the month
+ 		let sLastDay = nexacro.toNumber(this._fn_getLastDay(sToDay));
+
+ 		//Week count for the month
+ 		let nWeekCount = nexacro.ceil((nDayNum + sLastDay)/7);
+ 		let nCellHeight = nexacro.round((nexacro.round(nCalendarHeight/nWeekCount,3)/nViewCompHeight)*100,2);
+
+		let oDiv = {};
+		let sDay = 0;
+		let sDivId = "";
+		let nTop = this.TOP_POSITION-1;
+		nLeft = 0;		 
+		for(let nRow = 0 ; nRow < nWeekCount ; nRow++){
+		 	for(let nCol =  0 ; nCol < 7 ; nCol++){
+				oDiv = {};
+				sDivId = "div_" + nRow + "_" + nCol;
+				oDiv.tag = "Div";				
+				oDiv.attribute = {};
+				oDiv.attribute.id = sDivId;
+				if(nRow == 0){
+					if(nCol == 0){
+						oDiv.attribute.left = nLeft;
+						oDiv.attribute.width = nCellWidth + "%";
+					} else if(nCol == 6){
+						oDiv.attribute.left = "div_" + nRow + "_" + (nCol-1)+":-1";
+						oDiv.attribute.right = 0;						
+					} else {
+						oDiv.attribute.left = "div_" + nRow + "_" + (nCol-1)+":-1";
+						oDiv.attribute.width = nCellWidth + "%";
+					}
+					oDiv.attribute.top = nTop;					
+					oDiv.attribute.height = nCellHeight + "%";					
+				} else if(nRow == nWeekCount -1){
+					if(nCol == 0){
+						oDiv.attribute.left = nLeft;
+						oDiv.attribute.width = nCellWidth + "%";
+					} else if(nCol == 6){
+						oDiv.attribute.left = "div_" + nRow + "_" + (nCol-1)+":-1";
+						oDiv.attribute.right = 0;						
+					} else {
+						oDiv.attribute.left = "div_" + nRow + "_" + (nCol-1)+":-1";
+						oDiv.attribute.width = nCellWidth + "%";
+					}
+					oDiv.attribute.top = "div_" + (nRow-1) + "_" + nCol +":-1";;
+					oDiv.attribute.bottom = 0;					
+				} else {
+					if(nCol == 0){
+						oDiv.attribute.left = nLeft;
+						oDiv.attribute.width = nCellWidth + "%";
+					} else if(nCol == 6){
+						oDiv.attribute.left = "div_" + nRow + "_" + (nCol-1)+":-1";
+						oDiv.attribute.right = 0;						
+					} else {
+						oDiv.attribute.left = "div_" + nRow + "_" + (nCol-1)+":-1";
+						oDiv.attribute.width = nCellWidth + "%";
+					}
+					oDiv.attribute.top = "div_" + (nRow-1) + "_" + nCol +":-1";;
+					oDiv.attribute.height = nCellHeight + "%";
+				}
+				if(nRow == 0 && nCol < nDayNum || sDay >= sLastDay){
+
+				} else {
+					sDay++;
+					oDiv.attribute.text = " " + sDay;
+				}			
+				if(nRow == (nWeekCount-1_))
+				if(nCol == 6){
+					oDiv.attribute.border = "1px solid #aaaaaa,1px solid #aaaaaa,0px solid #aaaaaa,1px solid #aaaaaa";
+				} else {
+					oDiv.attribute.border = "1px solid #aaaaaa,0px solid #aaaaaa,0px solid #aaaaaa,1px solid #aaaaaa";
+				}
+				oDiv.attribute.textAlign = "left";
+				oDiv.attribute.verticalAlign = "top";
+
+				oModel[oModel.length-1].Components.push(oDiv);
+		 	}
+			
+		 	nTop = nTop + nCellHeight-1;		
+		 	nLeft = 0;
+		}
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetCompId
+	* Parameter    :
+					- sCompId : Component ID to create
+	* Return       : sRtnCompId : Component ID
+	* Description  : Function to generate component ID
+	*---------------------------------------------------------------------------------------------*/
+
+	this.fn_GetCompId = function(sCompId){
+
+		let sNewCompId = "";
+
+		if (this.COMP_NAMING_RULE == "C") {
+			sNewCompId = this.lfn_ToCamelCase(sCompId);
+		} else if (this.COMP_NAMING_RULE == "S") {
+			sNewCompId = this.lfn_ToSnakeCase(sCompId);
+		} else if (this.COMP_NAMING_RULE == "LS") {
+			sNewCompId = this.lfn_ToLowerSnakeCase(sCompId);
+		} else {
+			sNewCompId = sCompId;
+		}
+
+		//Check if a component created with the same Field exists
+		let arrTemp = this.arrCompIds.filter(arrCompIds=>arrCompIds.indexOf(sNewCompId)==0);
+		let sRtnCompId;
+
+		//When a component created with the same Field exists
+		if(arrTemp.length>0)sRtnCompId = sNewCompId+"_"+arrTemp.length;
+
+		//When no component created with the same Field exists
+		else sRtnCompId = sNewCompId;
+
+		//Add to component ID management array
+		this.arrCompIds[this.arrCompIds.length] = sRtnCompId;
+
+		//Return component ID
+		return sRtnCompId;
+	};
+/*===============================================================================================*/
+/* Function definitions used in viewtemplate
+/*-----------------------------------------------------------------------------------------------*/
+/* Notes: 1. Do not include comments inside these functions.                                      */
+/*        2. Escape characters such as '\r, \n, \t' must not be used.                          */
+/*===============================================================================================*/
+	this._fn_getToDay = function(){
+		let oDate = new nexacro.Date();
+		let sYear = oDate.getFullYear();
+		let sMonth = (oDate.getMonth()+1).toString().padLeft(2, '0');
+		let sDay = oDate.getDate().toString().padLeft(2, '0');
+		
+		let sDate = sYear + sMonth + sDay;
+		return sDate;
+	}
+	//Function to get day of week by date
+	//0 : Sunday ~ 6 : Saturday
+	this._fn_getDay = function(strDate)
+	{
+		var date = new Date();
+
+		var iYear = parseInt(strDate.substr(0, 4));
+		var iMonth = parseInt(strDate.substr(4, 2) - 1);
+		var iDate = parseInt(strDate.substr(6, 2));
+		
+		date.setFullYear(iYear,iMonth,iDate);
+		return date.getDay();
+	};
+
+	this._fn_getLastDay = function(strDate)
+	{
+		var s = "";
+		if (strDate == null) {
+			var date = (new Date()).addMonth(1);
+		}
+		else {
+			var date = new Date(parseInt(strDate.substr(0,4)),parseInt(strDate.substr(4,2)),1);
+		}
+
+		date = (new Date(date)).addDate((new Date(date)).getDate()*-1);
+
+		s = ((new Date(date)).getDate() + "").padLeft(2, '0');
+
+		return (s);
+	};
+/*===============================================================================================*/
+/* List of functions defined inside the script generated by fn_GetScript
+/*-----------------------------------------------------------------------------------------------*/
+/* Notes: 1. Do not include comments inside these functions.                                      */
+/*        2. Escape characters such as '\r, \n, \t' must not be used.                          */
+/*===============================================================================================*/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : _fnViewOnLoad
+	* Description  : Handles the onload event processing for the view component
+	*---------------------------------------------------------------------------------------------*/
+	this._fnViewOnLoad = function(objForm){
+		/* Sets the view form reference so that functions declared in the view can access it */
+		this._ownerForm = objForm;
+
+		this._cfn_calendarInit(this._gfn_getDate("date"));
+	};
+
+	this._cfn_calendarInit = function(){
+		this._cfn_makeCalendar();
+	};
+
+	this._cfn_makeCalendar = function(){
+		let nViewWidth = this.getOffsetWidth();
+		let nViewHeight = this.getOffsetHeight();
+
+		/*Delete Div components in view (except div_bgDate)*/
+		let aComponent = this.components;
+		for(let i = aComponent.length -1 ; i >=  0  ; i--){
+			if(aComponent[i] instanceof nexacro.Div){
+				if(aComponent[i].id != "div_bgDate"){
+					let oComp = this.removeChild(aComponent[i].id);
+					oComp.destroy();
+				}
+			}
+		}
+		let nCellWidth = nexacro.round(nexacro.round(nViewWidth/7,2)/nViewWidth*100,2);
+
+		let nTopPosition = 90;
+		let nCalendarHeight = nViewHeight - nTopPosition - 2;
+
+		let sDate = this.div_bgDate.form.sta_Date.sDate; /*this._gfn_getDate("date");*/
+
+ 		/*Day-of-week number for the 1st*/
+ 		let nDayNum = nexacro.toNumber(this._gfn_getDay(sDate.substr(0,6)+"01"));
+
+ 		/*Last day of the month*/
+ 		let sLastDay = nexacro.toNumber(this._gfn_getLastDay(sDate));	
+
+ 		/*Week count for the month*/
+ 		let nWeekCount = nexacro.ceil((nDayNum + sLastDay)/7);
+ 		let nCellHeight = nexacro.round((nexacro.round(nCalendarHeight/nWeekCount,3)/nViewHeight)*100,2);
+
+		let oDiv = null;
+		let sDay = 0;
+		let sDivId = "";
+		let nTop = nTopPosition -1;
+		let nLeft = 0;		 
+
+		for(let nRow = 0 ; nRow < nWeekCount ; nRow++){
+		 	for(let nCol =  0 ; nCol < 7 ; nCol++){
+				oDiv = new Div();
+				sDivId = "div_" + nRow + "_" + nCol;
+				if(nRow == 0){
+					if(nCol == 0){
+						oDiv.init(sDivId, nLeft, nTop, nCellWidth+"%", nCellHeight+"%");
+					} else if(nCol == 6){
+						oDiv.init(sDivId, "div_" + nRow + "_" + (nCol-1)+":-1", nTop, null,nCellHeight+"%",0);
+					} else {
+						oDiv.init(sDivId, "div_" + nRow + "_" + (nCol-1)+":-1", nTop, nCellWidth + "%",nCellHeight+"%");
+					}
+				} else if(nRow == nWeekCount -1){
+					if(nCol == 0){
+						oDiv.init(sDivId, nLeft, "div_" + (nRow-1) + "_" + nCol +":-1", nCellWidth + "%", null, null, 0);
+					} else if(nCol == 6){
+						oDiv.init(sDivId, "div_" + nRow + "_" + (nCol-1)+":-1", "div_" + (nRow-1) + "_" + nCol +":-1", null, null, 0, 0);
+					} else {
+						oDiv.init(sDivId, "div_" + nRow + "_" + (nCol-1)+":-1", "div_" + (nRow-1) + "_" + nCol +":-1", nCellWidth + "%", null, null, 0);
+					}
+				} else {
+					if(nCol == 0){
+						oDiv.init(sDivId, nLeft, "div_" + (nRow-1) + "_" + nCol +":-1", nCellWidth + "%", nCellHeight + "%");
+					} else if(nCol == 6){
+						oDiv.init(sDivId, "div_" + nRow + "_" + (nCol-1)+":-1", "div_" + (nRow-1) + "_" + nCol +":-1", null, nCellHeight + "%",0);
+					} else {
+						oDiv.init(sDivId, "div_" + nRow + "_" + (nCol-1)+":-1", "div_" + (nRow-1) + "_" + nCol +":-1", nCellWidth + "%", nCellHeight + "%");
+					}
+				}
+
+				if(nRow == 0 && nCol < nDayNum || sDay >= sLastDay){
+
+				} else {
+					sDay++;
+					oDiv.text = " " + sDay;
+				}				
+				oDiv.border = "1px solid #aaaaaa,0px solid #aaaaaa,0px solid #aaaaaa,1px solid #aaaaaa";
+				oDiv.textAlign = "left";
+				oDiv.verticalAlign = "top";
+
+				this.addChild(sDivId, oDiv);
+				
+				oDiv.show();				
+		 	}
+		 	nTop = nTop + nCellHeight-1;		
+		 	nLeft = 0;
+		}
+	};
+]]>
+  </Script>
+  <TestData>
+    <TestFields><![CDATA[{
+    "fields": [
+        {
+            "id": "field1",
+            "label": "Field1",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Boolean",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "truevalue": "Y",
+                "falsevalue": "N"
+            }
+        },
+        {
+            "id": "field2",
+            "label": "Field2",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Date",
+            "datatype": "DATE",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "dataformat": "yyyy-MM-dd"
+            }
+        },
+        {
+            "id": "field3",
+            "label": "Field3",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Time",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field4",
+            "label": "Field4",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "DateTime",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field5",
+            "label": "Field5",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "FromToDate",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field6",
+            "label": "Field6",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Email",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field7",
+            "label": "Field7",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Image",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field8",
+            "label": "Field8",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Label",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field9",
+            "label": "Field9",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Text",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field10",
+            "label": "Field10",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "LongText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field11",
+            "label": "Field11",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiLineText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field12",
+            "label": "Field12",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Password",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field13",
+            "label": "Field13",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Number",
+            "datatype": "INT",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field14",
+            "label": "Field14",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Phone",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field15",
+            "label": "Field15",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Price",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field16",
+            "label": "Field16",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Select",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "innerdataset_list": [
+                    {
+                        "label": "TOBESOFT",
+                        "value": "01"
+                    },
+                    {
+                        "label": "A Company",
+                        "value": "02"
+                    },
+                    {
+                        "label": "B Company",
+                        "value": "03"
+                    },
+                    {
+                        "label": "C Company",
+                        "value": "04"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "field17",
+            "label": "Field17",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiSelect",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field18",
+            "label": "Field18",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "ProgressBar",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        }
+    ]
+}]]>
+    </TestFields>
+    <TestViewProperties><![CDATA[{
+    "attributes": {
+		"titleuse": "true",
+        "titletext": "This is title",
+        "fieldwidth": "250",
+        "labelwidth": "100"
+    }
+}]]>
+    </TestViewProperties>
+  </TestData>
+</ViewTemplateInfo>

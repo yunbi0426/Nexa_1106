@@ -1,0 +1,986 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Script version="1.0" type="xscript5.1"><![CDATA[
+/******************************************************************************
+*  ViewTemplate
+*  @FileName 	basicCommon.xjs
+*  @Creator
+*  @CreateDate
+*  @Desction    ViewTemplate관련 공통 함수
+*******************************************************************************/
+//--------------------------------------------------------------------------------------------------------
+// ViewTemplate 공통변수
+//--------------------------------------------------------------------------------------------------------
+// FieldType List
+this.enFIELDTYPE =	{
+	 "boolean" 			: "Boolean"
+	,"date" 			: "Date"
+	,"time" 			: "Time"
+	,"datetime" 		: "DateTime"
+	,"fromtodate" 		: "FromToDate"
+	,"email" 			: "Email"
+	,"image" 			: "Image"
+	,"label" 			: "Label"
+	,"text" 			: "Text"
+	,"longtext" 		: "LongText"
+	,"multilinetext" 	: "MultiLineText"
+	,"password" 		: "Password"
+	,"number" 			: "Number"
+	,"phone" 			: "Phone"
+	,"price" 			: "Price"
+	,"select" 			: "Select"
+	,"multiSelect" 		: "MultiSelect"
+	,"progressbar" 		: "ProgressBar"
+	,"TextSearchable" 	: "TextSearchable"
+};
+
+//모델 정보
+this.oFieldArray;
+
+//Use Model Information
+this.oUseFieldArray;
+
+//뷰 컴포넌트 정보
+this.oContents;
+
+//뷰 컴포넌트 정보(현재)
+this.oContentsOrg;
+
+//옵션 설정 정보
+this.oViewProperties;
+
+//컴포넌트 ID 목록
+this.arrCompIds = [];
+
+//컴포넌트 + 바인드 Field 목록
+this.arrBindItems = [];
+
+//Grid, Listview Field별 cell정보
+this.oFieldCellInfo = {};
+
+// View에서 생성한 컴포넌트의 Field ID
+this.VIEW_COMP_FIELD_ID = "_viewcomp";
+
+// Inner Dataset 정보가 있는 Field ID
+// this.INNSER_DS_FIELD_ID = "innerdatasetinfo";
+this.FIELD_OPTIONS = "options";
+
+//FluidLayout이 적용된 Root 객체
+this.oLayoutRoot;
+//--------------------------------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------------------------------
+// 프로젝트 공통 변수
+//--------------------------------------------------------------------------------------------------------
+// 네이밍 컨벤션 종류 (C : camelCase, S : snakeCase, LS : lower snakeCase, 빈값 : 지정안함.)
+this.COMP_NAMING_RULE	= "C";
+
+/** @const {string} */
+// 디버깅 레벨. 설정된 레벨보다 낮은 디버깅 로그는 출력안됨.(-1 : 체크안함) [0:"debug", 1:"info", 2:"warn", 3:"error"]
+this.LOG_LEVEL			= -1;
+
+// MobileComp 사용여부(this.DEVICE_TYPE === "M"일때만 적용됨)
+this.USE_MOBILE_COMP	= true;
+//--------------------------------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------------------------------
+// View 여백관련 상수
+//--------------------------------------------------------------------------------------------------------
+// View 여백
+this.VIEW_PADDING_LEFT				= 0;
+this.VIEW_PADDING_TOP				= 0;
+this.VIEW_PADDING_RIGHT				= 0;
+this.VIEW_PADDING_BOTTOM			= 0;
+
+this.oAttrViewPadding =	{
+							"id": "viewpadding",
+							"displaytext": "View padding(px)",
+							"edittype": "String",
+							"defaultvalue": this.lfn_Nvl(this.VIEW_PADDING, ""),
+							"description": "Set the view padding (px)"
+											+ "\n" + "(Only numbers can be entered, and settings can be specified using spaces)"
+											+ "\n" + "one input value : [1st value] applies to top/right/bottom/left"
+											+ "\n" + "two inputs : [1st value] top/bottom, [2nd value] right/left"
+											+ "\n" + "three inputs : [1st value] top, [2nd value] right/left, [3rd value] bottom"
+											+ "\n" + "four inputs : [1st value] top, [2nd value] right, [3rd value] bottom, [4th value] left"
+						};
+//--------------------------------------------------------------------------------------------------------
+// 타이틀 객체 관련 상수(ExpandButton + Title + TotalCount)
+//--------------------------------------------------------------------------------------------------------
+// Title 영역 생성여부
+this.bTitleArea = false;
+
+// Title 영역 Div ID
+this.DIV_TITLE_ID						= "divTitle";
+// Title 영역 Height
+this.TITLE_AREA_HEIGHT					= 61;
+// Title 영역 컴포넌트 Gap
+this.TITLE_AREA_COMP_SPACE				= 5;
+
+// Title ID
+this.TITLE_ID							= "staTitle";
+// Title 높이
+this.TITLE_HEIGHT						= 61;
+// Title Text (ViewTemplate에서 this.TITLE_TEXT 설정하지 않을때 기본값)
+this.TITLE_TEXT_BASE					= "";
+// Title fittocontents
+this.TITLE_FITTOCONTENTS 				= "width";
+// Title Default CSS Class
+this.TITLE_CSSCLASS						= "sta_WF_Title";
+// Title Default CSS Class
+this.DASHBOARD_TITLE_CSSCLASS			= "sta_WF_Title_DashBoard";
+// Title Default CSS Class
+this.TITLE_NOICON_CSSCLASS				= "sta_MF_title";
+
+// TotalCount 객체 사용여부 (ViewTemplate에서 this.USE_TOT_COUNT 설정하지 않을때 기본값)
+this.USE_TOT_COUNT_BASE					= "false";
+// TotalCount ID
+this.TOT_COUNT_ID						= "staTotCnt";
+// TotalCount 높이
+this.TOT_COUNT_HEIGHT					= 30;
+// TotalCount 기본Text
+this.TOT_COUNT_TEXT						= "(<b v='true'><fc v='#da291c'>{0}</fc></b> Items)";
+// TotalCount fittocontents
+this.TOT_COUNT_FITTOCONTENTS 			= "width";
+// TotalCount usedecorate
+this.TOT_COUNT_USEDECORATE				= "true";
+// TotalCount Default CSS Class
+this.TOT_COUNT_CSSCLASS					= "sta_total_count";
+// TotalCount 표시 타입(rowcount : view's dataset rowcount, loadcount : load시 rowcount, none : 동작안함)
+this.TOT_COUNT_TYPE						= "rowcount";
+
+// expand 버튼 객체 사용여부 (ViewTemplate에서 this.USE_EXPAND_BUTTON 설정하지 않을때 기본값)
+this.USE_EXPAND_BUTTON_BASE				= "none";
+// expand/collapse 버튼 사이즈(width, height)
+this.EXPAND_BUTTON_SIZE					= 20;
+
+// expand 버튼 ID
+this.EXPAND_BUTTON_ID					= "btnExpand";
+// open 버튼 cssclass
+this.EXPAND_BUTTON_OPEN_CSSCLASS 		= "btn_title_open";
+// close 버튼 cssclass
+this.EXPAND_BUTTON_CLOSE_CSSCLASS 		= "btn_title_close";
+
+this.oAttrTitleText =	{
+							  "id"				: "titletext"
+							, "displaytext"		: "Title text"
+							, "edittype"		: "String"
+							, "defaultvalue"	: this.lfn_Nvl(this.TITLE_TEXT, this.TITLE_TEXT_BASE)
+							, "description"		: "Set the title text (Other fields will not be created if title text is not entered)"
+					};
+this.oAttrTitleUseTotolCount =	{
+							  "id"				: "usetotalcount"
+							, "displaytext"		: "Total count"
+							, "edittype"		: "Boolean"
+							, "defaultvalue"	: this.lfn_Nvl(this.USE_TOT_COUNT, this.USE_TOT_COUNT_BASE)
+							, "description"		: "Display of total count"
+					};
+this.oAttrTitleExpandButton =	{
+							  "id"				: "useexpandbutton"
+							, "displaytext"		: "Expand button"
+							, "edittype"		: "Enum"
+							, "enumlist"		: ["none", "open", "close"]
+							, "defaultvalue"	: this.lfn_Nvl(this.USE_EXPAND_BUTTON, this.USE_EXPAND_BUTTON_BASE)
+							, "description"		: "Set expand/collapse button visibility in the title area"
+													+ "\n" + " - none : Do not display the expand button"
+													+ "\n" + " - open : Provide freeform area in an expanded view"
+													+ "\n" + " - close : Provide freeform area a collapsed view"
+					};
+
+//--------------------------------------------------------------------------------------------------------
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : lfn_SetViewPadding
+	* Parameter    : N/A
+	* Return       : N/A
+	* Description  : viewpadding값 기준으로 view padding 전역변수 설정
+	*---------------------------------------------------------------------------------------------*/
+	this.lfn_SetViewPadding = function()
+	{
+		var sViewPadding = "";
+
+
+		if (this.oViewProperties.attributes.hasOwnProperty("viewpadding")) {
+			sViewPadding = this.oViewProperties.attributes.viewpadding;
+		} else {
+			sViewPadding = this.VIEW_PADDING;
+		}
+
+		if (sViewPadding)
+		{
+			// 1회 입력 : top/right/bottom/left 에 모두 적용됩니다.
+			// 2회 입력 : top/bottom, right/left 에 첫번째 값부터 각각 적용됩니다.
+			// 3회 입력 : top, right/left, bottom 에 첫번째 값부터 각각 적용됩니다.
+			// 4회 입력 : top, right, bottom, left 에 첫번째 값부터 각각 적용됩니다.
+			var arrViewPadding = this.lfn_CalcPadding(sViewPadding);
+
+			this.VIEW_PADDING_TOP = arrViewPadding[0];
+			this.VIEW_PADDING_RIGHT = arrViewPadding[1];
+			this.VIEW_PADDING_BOTTOM = arrViewPadding[2];
+			this.VIEW_PADDING_LEFT = arrViewPadding[3];
+		}
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+ * Function     : lfn_CalcPadding
+ * Parameter    : sPadding - 설정할 Padding값 문자열
+ *  		1회 입력 : top/right/bottom/left 에 모두 적용됩니다.
+ *  		2회 입력 : top/bottom, right/left 에 첫번째 값부터 각각 적용됩니다.
+ *  		3회 입력 : top, right/left, bottom 에 첫번째 값부터 각각 적용됩니다.
+ *  		4회 입력 : top, right, bottom, left 에 첫번째 값부터 각각 적용됩니다.
+ * Return       : 여백값 Array - [top, right, bottom, left]
+ * Description  : sPadding 기준으로 padding값 배열을 반환
+ *---------------------------------------------------------------------------------------------*/
+this.lfn_CalcPadding = function(sPadding)
+{
+	var arrPadding = new Array(0,0,0,0);
+
+	if (sPadding)
+	{
+		var arrTempPadding = sPadding.toString().split(" ");
+		var nPaddingTop, nPaddingRight, nPaddingBottom, nPaddingLeft;
+
+		// 1회 입력 : top/right/bottom/left 에 모두 적용됩니다.
+		// 2회 입력 : top/bottom, right/left 에 첫번째 값부터 각각 적용됩니다.
+		// 3회 입력 : top, right/left, bottom 에 첫번째 값부터 각각 적용됩니다.
+		// 4회 입력 : top, right, bottom, left 에 첫번째 값부터 각각 적용됩니다.
+		if (arrTempPadding.length == 1)
+		{
+			arrPadding[0] = nexacro.toNumber(arrTempPadding[0]);
+			arrPadding[1] = nexacro.toNumber(arrTempPadding[0]);
+			arrPadding[2] = nexacro.toNumber(arrTempPadding[0]);
+			arrPadding[3] = nexacro.toNumber(arrTempPadding[0]);
+		}
+		else if (arrTempPadding.length == 2)
+		{
+			arrPadding[0] = nexacro.toNumber(arrTempPadding[0]);
+			arrPadding[1] = nexacro.toNumber(arrTempPadding[1]);
+			arrPadding[2] = nexacro.toNumber(arrTempPadding[0]);
+			arrPadding[3] = nexacro.toNumber(arrTempPadding[1]);
+		}
+		else if (arrTempPadding.length == 3)
+		{
+			arrPadding[0] = nexacro.toNumber(arrTempPadding[0]);
+			arrPadding[1] = nexacro.toNumber(arrTempPadding[1]);
+			arrPadding[2] = nexacro.toNumber(arrTempPadding[2]);
+			arrPadding[3] = nexacro.toNumber(arrTempPadding[1]);
+		}
+		else if (arrTempPadding.length == 4)
+		{
+			arrPadding[0] = nexacro.toNumber(arrTempPadding[0]);
+			arrPadding[1] = nexacro.toNumber(arrTempPadding[1]);
+			arrPadding[2] = nexacro.toNumber(arrTempPadding[2]);
+			arrPadding[3] = nexacro.toNumber(arrTempPadding[3]);
+		}
+	}
+
+	return arrPadding;
+};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : lfn_GetCompClass
+	* Parameter    :
+	*                - sCompType : CompType of field
+	* Return       : component class data
+	* Description  : Returns class information of the component based on Field data
+	*---------------------------------------------------------------------------------------------*/
+	this.lfn_GetCompClass = function(sCompType, oField, sAutoField)
+	{
+		let oCompClass = { "classId" : null, "prefix" : null , "attribute" : null};
+		let oProp = {};
+
+		// comptype이 auto일때 oField정보로 매칭되는 컴포넌트 반환
+		if (this.lfn_IsNotNull(oField))
+		{
+			sCompType = this.lfn_GetAutoCompType(oField, sAutoField);
+
+			oProp = this.lfn_GetCompProp(sCompType,oField);
+			oCompClass.attribute = oProp;
+		}
+
+		// 컴포넌트별
+		switch(sCompType)
+		{
+			case "button" : oCompClass.classId = "Button";
+							oCompClass.prefix = "btn";
+							break;
+			case "combo" : oCompClass.classId = "Combo";
+							oCompClass.prefix = "cmb";
+							break;
+			case "edit" : oCompClass.classId = "Edit";
+							oCompClass.prefix = "edt";
+							break;
+			case "maskedit" : oCompClass.classId = "MaskEdit";
+							oCompClass.prefix = "msk";
+							break;
+			case "textarea" : oCompClass.classId = "TextArea";
+							oCompClass.prefix = "txt";
+							break;
+			case "static" : oCompClass.classId = "Static";
+							oCompClass.prefix = "sta";
+							break;
+			case "radio" : oCompClass.classId = "Radio";
+							oCompClass.prefix = "rdo";
+							break;
+			case "checkbox" : oCompClass.classId = "CheckBox";
+							oCompClass.prefix = "chk";
+							break;
+			case "spin" : oCompClass.classId = "Spin";
+							oCompClass.prefix = "spn";
+							break;
+			case "calendar" : oCompClass.classId = "Calendar";
+							oCompClass.prefix = "cal";
+							break;
+			case "imageviewer" : oCompClass.classId = "ImageViewer";
+							oCompClass.prefix = "img";
+							break;
+			case "progressbar" : oCompClass.classId = "ProgressBar";
+							oCompClass.prefix = "prg";
+							break;
+			case "grid" : oCompClass.classId = "Grid";
+							oCompClass.prefix = "grd";
+							break;
+			case "multicombo" : oCompClass.classId = "MultiCombo";
+							oCompClass.prefix = "mcb";
+							break;
+			case "checkboxset" : oCompClass.classId = "CheckBoxSet";
+							oCompClass.prefix = "cbs";
+							break;
+			case "webview" : oCompClass.classId = "WebView";
+							oCompClass.prefix = "web";
+							break;
+			case "webbrowser" : oCompClass.classId = "WebBrowser";
+							oCompClass.prefix = "web";
+							break;
+			case "selectone" : oCompClass.classId = "AbstractSelectOne";
+							oCompClass.prefix = "aso";
+							break;
+			case "selectany" : oCompClass.classId = "AbstractSelectAny";
+							oCompClass.prefix = "asa";
+							break;
+			case "sketch" : oCompClass.classId = "Sketch";
+							oCompClass.prefix = "skc";
+							break;
+			case "panel" : oCompClass.classId = "Panel";
+							oCompClass.prefix = "pnl";
+							break;
+			case "textfield" : oCompClass.classId = "TextField";
+							oCompClass.prefix = "txf";
+							break;
+			case "multilinetextfield" : oCompClass.classId = "MultiLineTextField";
+							oCompClass.prefix = "mtf";
+							break;
+			case "datefield" : oCompClass.classId = "DateField";
+							oCompClass.prefix = "dtf";
+							break;
+			case "TextSearchable" :
+							oCompClass.classId = "SearchEdit";
+							oCompClass.prefix = "srd";
+							break;
+			default : oCompClass.classId = "Static";
+							oCompClass.prefix = "sta";
+							break;
+		}
+
+		//컴포넌트 정보 리턴
+		return oCompClass;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : lfn_GetAutoCompType
+	* Parameter    :
+	*                - oField : Field 정보
+					- sAutoField : body displaytype 정보
+					- sHeadTypeOption : samewithbody 정보 (true/false)
+					- bIsHead : 해당 필드 값이 head row 에서 사용하는 정보라는 것 (true/false)
+	* Return       : comptype
+	* Description  : comptype이 auto일때 oField정보로 매칭되는 컴포넌트 반환
+	*---------------------------------------------------------------------------------------------*/
+	this.lfn_GetAutoCompType = function(oField, sAutoField, sHeadTypeOption, bIsHead)
+	{
+		if (this.lfn_IsNull(sAutoField)){
+			sAutoField = "comptype";
+		}
+
+		let sCompType = oField[sAutoField];
+		if (this.lfn_IsNull(sCompType)){
+			sCompType = "auto";
+		}
+
+		if (bIsHead == undefined) {
+			bIsHead = false;
+		}
+
+		let sSameBodyType = oField[sHeadTypeOption];
+		if (sSameBodyType == undefined)	{
+			sSameBodyType = "false";
+		}
+
+		if (bIsHead == true && sSameBodyType == "false"){
+			sCompType = "normal";
+
+			return sCompType;
+		}
+
+		//Auto 일때 처리
+		if (sCompType == "auto") {
+			let sFieldType = oField["fieldtype"];
+			let sDataType = oField["datatype"];
+			let sDataSize = oField["datasize"];
+
+			switch (sFieldType){
+				case this.enFIELDTYPE.boolean: // Checkbox
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","checkboxcontrol","edittype","checkbox","checkbox");
+					break;
+				case this.enFIELDTYPE.date: // Calendar
+					if (this.DEVICE_TYPE === "M" && this.USE_MOBILE_COMP){
+						sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","normal","datefield");
+					} else {
+						sCompType = this.lfn_Decode(sAutoField,"displaytype","date","edittype","date","calendar");
+					}
+					break;
+				case this.enFIELDTYPE.time: // MaskEdit // format=##:##:##
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","normal","maskedit");
+					break;
+				case this.enFIELDTYPE.datetime: // DateField
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","normal","datefield");
+					break;
+				case this.enFIELDTYPE.fromtodate: // DateRangePicker
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","normal","edit");
+					break;
+				case this.enFIELDTYPE.image: // ImageViewer
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","imagecontrol","edittype","none","imageviewer");
+					break;
+				case this.enFIELDTYPE.label: // Static
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","normal","static");
+					break;
+				case this.enFIELDTYPE.email: // Maskedit // AAA@AAA.AAA (이건 maskedit로 안되고 validation으로 체크해야하는듯..)
+				case this.enFIELDTYPE.text: // Text일 때, Edit
+					if (this.DEVICE_TYPE === "M" && this.USE_MOBILE_COMP){
+						sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","normal","textfield");
+					} else {
+						sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","normal","edit");
+					}
+					break;
+				case this.enFIELDTYPE.longtext: // TextArea
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","none","textarea");
+					break;
+				case this.enFIELDTYPE.multilinetext: // MultiLineTextField
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","none","textfield");
+					break;
+				case this.enFIELDTYPE.password: // Edit // password=true
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","normal","edit");
+					break;
+				case this.enFIELDTYPE.number: // Edit // inputtype=number
+					if (this.DEVICE_TYPE === "M" && this.USE_MOBILE_COMP){
+						sCompType = this.lfn_Decode(sAutoField,"displaytype","number","edittype","normal","textfield");
+					} else {
+						sCompType = this.lfn_Decode(sAutoField,"displaytype","number","edittype","normal","maskedit");
+					}
+					break;
+				case this.enFIELDTYPE.phone: // MaskEdit // format=###-####-####
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","normal","maskedit");
+					break;
+				case this.enFIELDTYPE.price: // MaskEdit // format=9,999
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","number","edittype","normal","maskedit");
+					break;
+				case this.enFIELDTYPE.select: // Combo/Radio/ListBox // innerdataset
+					if (this.USE_ABSTRACT_COMP) { // Select일때 AbstractSelectOne
+						sCompType = this.lfn_Decode(sAutoField,"displaytype","combotext","edittype","selectone");
+					} else {
+						sCompType = this.lfn_Decode(sAutoField,"displaytype","combotext"/*"combocontrol"*/,"edittype","combo","combo");
+					}
+					break;
+				case this.enFIELDTYPE.multiSelect: // MultiCombo/CheckBoxSet // innerdataset
+					if (this.USE_ABSTRACT_COMP) { // MultiSelect일때 AbstractSelectAny
+						sCompType = this.lfn_Decode(sAutoField,"displaytype","combotext","edittype","combo","selectany");
+					} else {
+						sCompType = this.lfn_Decode(sAutoField,"displaytype","multicombocontrol","edittype","multicombo","multicombo");
+					}
+					break;
+				case this.enFIELDTYPE.progressbar: // ProgressBar
+					sCompType = this.lfn_Decode(sAutoField,"displaytype","progressbarcontrol","edittype","none","progressbar");
+					break;
+				case this.enFIELDTYPE.TextSearchable:
+					sCompType = "TextSearchable";
+					break;
+			}
+
+			// 해당되는 값이 없고 auto인 경우 edit로 기본값 처리
+			if (sCompType == "auto"){
+				sCompType = this.lfn_Decode(sAutoField,"displaytype","normal","edittype","normal","edit");
+			}
+		}
+
+		return sCompType;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : lfn_GetCompProp
+	* Parameter    :
+	*                - sCompType : comptype
+	*                - oField : Field 정보
+	* Return       : {Object} 기본속성정보
+	* Description  : 컴포넌트별 기본으로 설정할 Property 반환
+	*---------------------------------------------------------------------------------------------*/
+	this.lfn_GetCompProp = function(sCompType, oField) {
+		let oProps = {};
+
+		let sFieldType;
+		let sDataType;
+		let sDataSize;
+		let sOptionsInfo;
+		let oOptionsInfo;
+
+		// ViewScript용
+		let sViewNm = this.oContents.View.attribute.id;
+
+		if (!this.lfn_IsNull(oField)){
+			sFieldType = oField["fieldtype"] ? oField["fieldtype"].toUpperCase() : "";
+			sDataType = oField["datatype"];
+			sDataSize = oField["datasize"];
+			sOptionsInfo = oField[this.FIELD_OPTIONS];
+
+			if (this.lfn_IsNotNull(sOptionsInfo)) {
+				if (typeof sOptionsInfo === "string") {
+					sOptionsInfo = sOptionsInfo.replace(/\n/g, '');
+					oOptionsInfo = this.lfn_StringToJson(sOptionsInfo);
+				} else {
+					oOptionsInfo = sOptionsInfo;
+				}
+			}
+		}
+
+		// 컴포넌트별
+		let sDataFormat = "";
+		switch(sCompType) {
+			// boolean : checkbox
+			case "calendar" :
+				if (sFieldType == "DATE" ){
+					// default value
+					oProps["dateformat"] = "yyyy-MM-dd";
+					oProps["editformat"] = "yyyy-MM-dd";
+
+					if (this.lfn_IsNotNull(sOptionsInfo)) {
+						sDataFormat = oOptionsInfo["dataformat"];
+						oProps["dateformat"] = sDataFormat;
+						oProps["editformat"] = sDataFormat;
+					}
+				} else if(sDataType == "DATETIME" && sDataSize == "17"){
+					// default value
+					oProps["dateformat"] = "yyyy-MM-dd HH:mm:ss";
+					oProps["editformat"] = "yyyy-MM-dd HH:mm:ss";
+
+					if (this.lfn_IsNotNull(sOptionsInfo)) {
+						sDataFormat = oOptionsInfo["dataformat"];
+						oProps["dateformat"] = sDataFormat;
+						oProps["editformat"] = sDataFormat;
+					}
+				}
+				break;
+			case "datefield" :
+				if (sFieldType == "DATETIME" || sDataType == "DATETIME" || (sDataType == "STRING" && sDataSize == "17")){
+					oProps["inputtype"] = "datetime";
+				} else if (sDataType == "TIME") {
+					oProps["inputtype"] = "time";
+				}
+				oProps["usehelpertext"] = "false";					// helpertext 표시X (기존 컴포넌트와 통일성)
+				break;
+				// fromtodate : daterangepicker
+			case "imageviewer" :
+				oProps["stretch"] = "fixaspectratio";		// 이미지 비율로늘림
+				break;
+			case "maskedit" :
+				// time : maskedit
+				// phone : maskedit
+				// price : maskedit
+				// email : maskedit
+				if (sFieldType == this.enFIELDTYPE.time)
+				{
+					oProps["format"] = "##:##:##";
+				}
+				else if (sFieldType == this.enFIELDTYPE.phone)
+				{
+					oProps["format"] = "###-####-####";
+				}
+				else if (sFieldType == this.enFIELDTYPE.price)
+				{
+					if (sDataType == "INT")
+					{
+						oProps["format"] = "#,###";
+					}
+					else if (sDataType == "FLOAT" || sDataType == "BIGDECIMAL")
+					{
+						oProps["format"] = "#,###.##";
+					}
+					else if(sDataType == "STRING")
+					{
+						oProps["type"] = "string";
+					}
+				}
+				break;
+				// label : static
+				// longtext : textarea
+				// select : combo/radio/listbox
+			case "radio" :
+				oProps["direction"] = "vertical";		// Radio 컴포넌트에서 한줄로 표시되도록 처리
+				break;
+				// multiselect : multicombo/checkboxset
+				// progressbar
+			case "edit" :
+				// text : edit
+				// password : edit
+				// number : edit
+				if (sFieldType == this.enFIELDTYPE.password)
+				{
+					oProps["password"] = "true";
+				}
+				else if (sFieldType == this.enFIELDTYPE.number)
+				{
+					oProps["inputtype"] = "number";
+				}
+				break;
+
+			// multilinetext : multilinetextfield
+			//case "multilinetextfield" : // trailingbutton 제공하지않음
+			case "textfield" :
+				if (sDataType == "INT" || sDataType == "FLOAT" || sDataType == "BIGDECIMAL") {
+					oProps["inputtype"] = "number";
+				}
+
+				oProps["usetrailingbutton"] = "false";				// X버튼 표시
+				oProps["trailingbuttonsize"] = "40 40";				// X버튼 표시
+				oProps["usecharcount"] = "false";					// 데이터건수 표시X
+				oProps["usehelpertext"] = "false";					// helpertext 표시X (기존 컴포넌트와 통일성)
+
+				break;
+
+			default :
+				break;
+		}
+
+		return oProps;
+	};
+
+    /*---------------------------------------------------------------------------------------------*
+    * Function     : lfn_GetCellProp
+    * Parameter    :
+    *                - sBand : band id("head","body","summ","detail")
+    *                - sDisplayType : displaytype 값
+    *                - sEditType : edittype 값
+    *                - oField : Field 정보
+    * Return       : {Object} 기본속성정보
+    * Description  : Cell 기본으로 설정할 Property 반환(Grid, ListView)
+    *---------------------------------------------------------------------------------------------*/
+    this.lfn_GetCellProp = function(sBand, sDisplayType, sEditType, oField, sCompClass)
+    {
+        let oProps = {};
+        let sFieldType;
+        let sDataType;
+        let sDataSize;
+        let sOptions;
+
+        if (this.lfn_IsNull(oField)){
+            return oProps;
+        }
+        sFieldType = oField["fieldtype"];
+        sDataType = oField["datatype"];
+        sDataSize = oField["datasize"];
+
+        if(!this.lfn_IsNull(oField["options"])){
+            sOptions = JSON.parse(oField["options"]);
+        } else {
+            sOptions = null;
+        }
+
+        if(sFieldType == "Date" || sFieldType == "DateTime"){
+            switch(sDisplayType) {
+                case "calendarcontrol" :
+                case "date" :
+                    if(!this.lfn_IsNull(sOptions["dataformat"])){
+                        oProps["calendardateformat"] = sOptions["dataformat"];
+                    } else {
+                        if (sDataType == "DATETIME"
+                            || (sDataType == "STRING" && sDataSize == "17"))
+                        {
+                            oProps["calendardateformat"] = "yyyy-MM-dd HH:mm:ss";
+                        }
+                        else if (sDataType == "DATE"
+                            || (sDataType == "STRING" && sDataSize == "8"))
+                        {
+                            oProps["calendardateformat"] = "SHORTDATE";
+                        }
+                    }
+                    oProps["calendardisplaynulltype"] ="none";
+                break;
+            }
+        } else {
+            switch(sDisplayType) {
+                case "mask" :
+                case "maskeditcontrol" :
+                    if(!this.lfn_IsNull(oField["maskeditformat"])){
+                        oProps["maskeditformat"] = oField["maskeditformat"];
+                    } else {
+                        if (sDataType == "INT")
+                        {
+                            oProps["maskeditformat"] = "#,##0";
+                        }
+                        else if (sDataType == "FLOAT" || sDataType == "BIGDECIMAL")
+                        {
+                            oProps["maskeditformat"] = "#,##0.##";
+                        }
+                        else if(sDataType == "STRING")
+                        {
+                            oProps["maskedittype"] = "string";
+                        }
+                    }
+                break;
+                case "imagecontrol" :
+                    oProps["imagestretch"] = "fixaspectratio";					// 이미지 비율로늘림
+                break;
+                default :
+                break;
+            }
+        }
+
+        // edittype
+        if(sFieldType == "Date" || sFieldType == "DateTime"){
+            switch(sEditType) {
+                case "date" :
+                    if (sDataType == "DATETIME"
+                        || (sDataType == "STRING" && sDataSize == "17"))
+                    {
+                        oProps["calendareditformat"] = "yyyy-MM-dd HH:mm:ss";
+                    }
+                    else if (sDataType == "DATE"
+                        || (sDataType == "STRING" && sDataSize == "8"))
+                    {
+                        oProps["calendareditformat"] = "SHORTDATE";
+                    }
+                break;
+            }
+        } else {
+            switch(sEditType) {
+                case "mask" :
+                    if (sDataType == "INT")
+                    {
+                        oProps["maskeditformat"] = "#,##0";
+                    }
+                    else if (sDataType == "FLOAT" || sDataType == "BIGDECIMAL")
+                    {
+                        oProps["maskeditformat"] = "#,##0.##";
+                    }
+                    break;
+                default :
+                    break;
+            }
+        }
+
+        return oProps;
+    };
+
+/*======================================START==================================================
+* 데이터셋 객체 Json 생성 함수
+===============================================================================================/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : lfn_GetDataset
+	* Parameter    :
+					- sDatasetId : 데이터셋ID
+					- objFieldArr : 데이터셋으로 만들 Field 객체
+					- nRowCnt : 데이터셋 rowcount
+					- arrRows : 데이터셋 row 데이터 정보
+	* Return       : 데이터셋 객체 Json 반환
+	* Description  : 데이터셋 객체 Json 생성 함수
+	*---------------------------------------------------------------------------------------------*/
+	this.lfn_GetDataset = function(sDatasetId, objFieldArr, nRowCnt, arrRows)
+	{
+		let oDatasetInfo = {
+				"tag": "Dataset",
+				"attribute": { "id": sDatasetId },
+				"Dataset": [
+				{
+					"tag": "ColumnInfo",
+					"attribute": {},
+					//Load Column Information Setting Function
+					"ColumnInfo": this.lfn_GetDsColumns(objFieldArr)
+				},
+				{
+					"tag": "Rows",
+					"attribute": {},
+					//Load Row Information Setting Function
+					"Rows": this.lfn_GetDsRows(nRowCnt, arrRows)
+				}]
+			};
+
+		return oDatasetInfo;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : lfn_GetDsColumns
+	* Parameter    :
+	*                - oFieldArray : model field data
+	* Return       : dataset column(s) data
+	* Description  : Function to generate <Column> source
+	*---------------------------------------------------------------------------------------------*/
+	this.lfn_GetDsColumns = function(objFieldArr)
+	{
+		let i;
+		let oColumns = [];
+
+		let oField;
+		let sLabel;
+		let sFieldId;
+		let sDataType;
+		let sDataSize;
+		let sProp;
+		let sSumText;
+
+		//모델 Field 개수 가져오기
+		let nCount = objFieldArr.fields.length;
+
+		//모델 Field 개수 만큼 컬럼 정보 만들기
+		for(let i=0;i<nCount;i++){
+			oField = objFieldArr.fields[i];
+
+			sFieldId 	= oField.id;
+			sLabel		= oField.label;
+			sDataType 	= oField.datatype;
+			sDataSize 	= oField.datasize;
+			sProp		= oField.prop;
+			sSumText	= oField.sumtext;
+
+			if(oField.comptype!="button"){
+				oColumns[i] ={
+							   "tag": "Column"
+							  ,"attribute": {
+											   "id": sFieldId
+											  ,"type": sDataType
+											  ,"size": sDataSize
+											 }
+							 };
+
+				if(this.lfn_IsNotNull(sLabel)){
+					oColumns[i]["attribute"]["description"] = sLabel;
+				}
+				if(this.lfn_IsNotNull(sProp)){
+					oColumns[i]["attribute"]["prop"] = sProp;
+				}
+				if(this.lfn_IsNotNull(sSumText)){
+					oColumns[i]["attribute"]["sumtext"] = sSumText;
+				}
+			}
+		}
+
+		//컬럼 정보 리턴
+		return oColumns;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : lfn_GetDsRows
+	* Parameter    : nRowCnt : 데이터셋 Row
+	* Return       : dataset row(s) data
+	* Description  : Function to generate <Row> source
+	*---------------------------------------------------------------------------------------------*/
+	this.lfn_GetDsRows = function(nRowCnt, arrRows){
+		if (nRowCnt == null){
+			nRowCnt = 1;
+		}
+
+		let i;
+		let oRows = [];
+		let oRow = [];
+
+		let oRowInfo;
+		let oRowCol;
+
+		for(let i=0;i<nRowCnt;i++){
+			oRow = [];
+
+			// Row 데이터 정보가 있는 경우 Row정보 생성
+			if (arrRows) {
+				oRowInfo = arrRows[i];
+
+				if (oRowInfo) {
+					for(let oInfo in oRowInfo) {
+						oRowCol = {
+									 "tag" : "Col"
+									,"attribute" : {"id" : oInfo}
+									,"value" : oRowInfo[oInfo]
+								};
+
+						oRow.push(oRowCol);
+					}
+				}
+			}
+
+			//Row정보 Rows에 추가
+			oRows[i] = {"tag": "Row",    "attribute": {},"Row": oRow};
+		}
+
+		//Rows 정보 리턴
+		return oRows;
+	};
+/*============================================================================================
+* 데이터셋 객체 Json 생성 함수
+========================================END===================================================*/
+
+/*---------------------------------------------------------------------------------------------*
+ * Function     : lfn_SetCellInnerDataset
+ * Parameter    :
+				- oComp : 대상 컴포넌트 컨텐츠 Json(Grid,ListView)
+				- sBand : 밴드유형
+				- oFieldCellInfo : Field별 Cell ID정보
+				- sFieldId : 설정할 Field ID
+				- sInnerDatasetId : InnerDataset 명
+				- sCodeField : InnerDataset Code Column ID
+				- sNameField : InnerDataset Name Column ID
+ * Return       : N/A
+ * Description  : Band에 InnerDataset 정보 셋팅
+ *---------------------------------------------------------------------------------------------*/
+this.lfn_SetCellInnerDataset = function(oComp, sBand, oFieldCellInfo, sFieldId, sInnerDatasetId, sCodeField, sNameField, sBackgroundField, sBorderField, sDateField, sTextColorField)
+{
+	let oFieldInfos, oFormat, oBand, oBandCells, oCell, oCellInfo;
+	if (oFieldCellInfo.hasOwnProperty(sFieldId))
+	{
+		oFieldInfos = oFieldCellInfo[sFieldId][sBand];
+
+		if (oFieldInfos.length > 0)
+		{
+			// Grid와 ListView 컴포넌트에서 Band객체 찾기
+			oFormat = oComp[oComp.tag][0]["Formats"][0]["Format"];
+			oBand = oFormat.find(oTag => oTag.tag == "Band" && oTag.attribute.id == sBand);
+			oBandCells = oBand["Band"];
+
+			// Field별 Cell정보로 Cell에 Innerdataset관련 속성 설정
+			for(l=0;l<oFieldInfos.length;l++)
+			{
+				oCellInfo = oFieldInfos[l];
+				oCell = oBandCells.find(oBandCell => oBandCell.attribute.id == oCellInfo.id);
+				if (oCell.attribute.displaytype == "combotext" || oCell.attribute.displaytype == "combocontrol")
+				{
+					oCell["attribute"]["combodataset"] = sInnerDatasetId;
+
+					if (this.lfn_IsNotNull(sCodeField))	oCell["attribute"]["combocodecol"] = sCodeField;
+					if (this.lfn_IsNotNull(sNameField))	oCell["attribute"]["combodatacol"] = sNameField;
+				}
+				else if (oCell.attribute.displaytype == "multicombocontrol")
+				{
+					oCell["attribute"]["multicombodataset"] = sInnerDatasetId;
+
+					if (this.lfn_IsNotNull(sCodeField))	oCell["attribute"]["multicombocodecol"] = sCodeField;
+					if (this.lfn_IsNotNull(sNameField))	oCell["attribute"]["multicombodatacol"] = sNameField;
+				}
+				else if (oCell.attribute.displaytype == "date")
+				{
+					oCell["attribute"]["calendardataset"] = sInnerDatasetId;
+
+					if (this.lfn_IsNotNull(sBackgroundField))	oCell["attribute"]["calendarbackgroundcol"] = sBackgroundField;
+					if (this.lfn_IsNotNull(sBorderField))	oCell["attribute"]["calendarbordercol"] = sBorderField;
+					if (this.lfn_IsNotNull(sDateField))	oCell["attribute"]["calendardatecol"] = sDateField;
+					if (this.lfn_IsNotNull(sTextColorField))	oCell["attribute"]["calendartextcolorcol"] = sTextColorField;
+				}
+			}
+
+		}
+	}
+}]]>
+</Script>

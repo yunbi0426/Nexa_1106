@@ -1,0 +1,1676 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ViewTemplateInfo version="2.0">
+  <ViewTemplate id="FreeformView" viewtype="Freeform" description_en="description of the view template" manual="extlib::NexaLAP_BasePack/_manual_/viewtemplates/FreeformView.md"/>
+  <Script version="1.0" type="xscript5.1"><![CDATA[/************************************************************************************************
+*  @FileName 	FreeformView
+*  @Creator 	Tobesoft
+*  @CreateDate 	2026.01.02
+*  @Desction    
+*  @Version		1.0.0.0
+*************************************************************************************************
+*  Revision History
+*************************************************************************************************
+*  Date          		Modifier                Description
+*************************************************************************************************
+*  YYYY.MM.DD     		Author       	        Initial creation
+************************************************************************************************/
+/************************************************************************************************
+ * Include Declarations 
+ ************************************************************************************************/
+  	include "../_lib_/util.xjs";
+	include "../_lib_/basicCommon.xjs";
+/************************************************************************************************
+ * Variable Definitions
+ ************************************************************************************************/
+	//Field default Width
+	this.FIELD_WIDTH		= "250px";
+
+	//Field default Height
+	this.FIELD_HEIGHT		= "38px";
+
+	// Title height
+	this.TITLE_HEIGHT		= 38;
+
+	//Label default SIZE
+	this.LABEL_SIZE    		  = 100;
+
+	//Component Padding
+	this.COMP_PADDING_LEFT     = 2;
+	this.COMP_PADDING_TOP      = 2;
+	this.COMP_PADDING_RIGHT    = 2;
+	this.COMP_PADDING_BOTTOM   = 2;
+
+	//Spacing between components (left/right)
+	this.COMP_SPACE				= 5;
+
+	//Component default CSS Class
+	this.COMP_CSSCLASS		  = "";
+
+	//Component background default CSS Class
+	this.COMP_BG_CSSCLASS	  = "sta_WF_LabelBg";
+
+	//Label default CSS Class
+	this.LABEL_CSSCLASS		  = "sta_WF_Label";
+
+	// Component types
+	this.ARR_COMP_TYPE = ["auto", "button", "combo", "edit", "maskedit", "textarea", "static", "radio", "checkbox", "spin"
+	                    , "calendar", "imageviewer", "multicombo", "checkboxset", "progressbar", "textfield", "multilinetextfield", "datefield"];
+
+	//Component Default Type
+	this.COMP_TYPE = "auto";
+
+
+	//////////////////////////////Constant Settings END ////////////////////////////////////////////////////
+
+	//Model information
+	this.oFieldArray;
+
+	//View component information
+	this.oContents;
+
+	//Option setting information
+	this.oViewProperties;
+
+	//For ViewProperties return
+	this.oViewPropertiesValue = {};
+
+	//Component ID list
+	this.arrCompIds = [];
+
+	//Component + bind Field list
+	this.arrBindItems = [];
+
+	//Whether Layout is newly created
+   	this.bNewLayout = false;
+
+	this.COMP_NAMING_RULE = "C";	   
+/************************************************************************************************
+ * Required Function Area for NexaLAP Studio
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     	: set_viewProperties
+	* Return       	: List of view generation attributes (JSON format)
+	* Description 	: Defines the attributes applied to the overall view during view generation.
+	*---------------------------------------------------------------------------------------------*/
+	this.set_viewProperties = function() {
+		let sViewAttr = "";
+		let oViewAttr = {"attributes" : []};
+		let oProperties = {};
+		
+		//Layout setting 
+		oProperties={};
+		oProperties.id 				= "layout";
+		oProperties.displaytext 	= "Layout";
+		oProperties.edittype 		= "Layout";
+		oProperties.defaultvalue 	= "";
+		oProperties.description 	= "Sets the view layout.";
+		oViewAttr.attributes.push(oProperties);
+
+		//Field Width setting 
+		oProperties={};
+		oProperties.id 				= "fieldWidth";
+		oProperties.displaytext 	= "Field width";
+		oProperties.edittype 		= "String";
+		oProperties.defaultvalue 	= this.FIELD_WIDTH;
+		oProperties.description 	= "Sets the component width value.";
+		oProperties.group			= "Field";
+		oViewAttr.attributes.push(oProperties);
+
+		//Label setting 
+		oProperties={};
+		oProperties.id 				= "labelWidth";
+		oProperties.displaytext 	= "Label width";
+		oProperties.edittype 		= "String";
+		oProperties.defaultvalue 	= this.LABEL_SIZE;
+		oProperties.description 	= "Label Width값을 설정합니다.";
+		oProperties.group			= "Label";
+		oViewAttr.attributes.push(oProperties);
+
+		oProperties={};
+		oProperties.id 				= "labelcssclass";
+		oProperties.displaytext 	= "Label css class";
+		oProperties.edittype 		= "String";
+		oProperties.defaultvalue 	= this.LABEL_CSSCLASS;
+		oProperties.description 	= "Label CSS Class값을 설정합니다.";
+		oProperties.group			= "Label";
+		oViewAttr.attributes.push(oProperties);
+
+		//Title useYN setting
+		oProperties={};
+		oProperties.id 				= "useTitle";
+		oProperties.displaytext 	= "Use title";
+		oProperties.edittype 		= "Boolean";
+		oProperties.defaultvalue 	= "false";
+		oProperties.description 	= "Sets whether to use the title.";
+		oProperties.group			= "Title";
+		oViewAttr.attributes.push(oProperties);
+
+		//Title text setting
+		oProperties={};
+		oProperties.id 				= "titletext";
+		oProperties.displaytext 	= "Title text";
+		oProperties.edittype 		= "String";
+		oProperties.defaultvalue 	= "";
+		oProperties.description 	= "Set the title text (Other fields will not be created if title text is not entered)";
+		oProperties.group			= "Title";
+		oViewAttr.attributes.push(oProperties);
+		
+		oViewAttr["attributecount"] = oViewAttr.attributes.length;
+				
+		sViewAttr = JSON.stringify(oViewAttr, null, "\t");
+
+		return sViewAttr;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : set_fieldProperties
+	* Return       : List of field-level attributes for view generation (JSON format)
+	* Description  : Defines the attributes applied to each model field during view generation.
+	*---------------------------------------------------------------------------------------------*/
+	this.set_fieldProperties = function() {
+		let sFieldAttr = "";
+		let oFieldAttr = {"attributes": []};
+		let oProperties = {};
+		
+		oProperties={};
+		oProperties.id 				= "comptype";
+		oProperties.displaytext 	= "Component type";
+		oProperties.edittype 		= "Enum";
+		oProperties.enumlist		= this.ARR_COMP_TYPE;
+		oProperties.defaultvalue 	= this.COMP_TYPE;
+		oProperties.description 	= "Types of Components to be Expressed";
+		
+		oFieldAttr.attributes.push(oProperties);
+
+		sFieldAttr = JSON.stringify(oFieldAttr, null, "\t");
+		return sFieldAttr;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : set_viewPropertiesValue
+	* Return       :
+	* Description  :
+	*---------------------------------------------------------------------------------------------*/
+	this.set_viewPropertiesValue = function ()
+	{
+		let sPropertiesValue = "";
+
+		if (this.oViewPropertiesValue) {
+			let oValues = this.oViewPropertiesValue;
+
+			sPropertiesValue = JSON.stringify(oValues, null, "\t");
+		}
+
+		return sPropertiesValue;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	 * Function    	: main
+	 * Parameters  	:
+	 * 				 - fieldarray     : List of model fields
+	 *  			 - contents       : Existing contents (including <View> element)
+	 *  			 - viewproperties : Attributes for view generation
+	 * Return      	: View definition (source + script) in JSON format
+	 * Description	: Generates the view based on the model fields and returns the result.
+	 *---------------------------------------------------------------------------------------------*
+	 *                        !!! This function is required by NexaLAP Studio. !!!                 *
+	 *                        !!! Do not remove or rename this function. !!!                       *
+	 *---------------------------------------------------------------------------------------------*/
+	this.main = function(fieldarray, contents, viewproperties) {
+		let sResult = "";
+
+		//Set model information as JSON object
+		if(fieldarray) {
+			this.oFieldArray = JSON.parse(fieldarray);
+		}
+
+		//Set option setting information as JSON object
+		if(contents) {
+			this.oContents = JSON.parse(contents);
+
+			// Initialize Model Information
+			this.oContents.View.Model = [];
+
+		}
+
+		// Set Option Setting Information as JSON Object
+		if(viewproperties) {
+			this.oViewProperties = JSON.parse(viewproperties);
+		}
+
+		//
+		this.FIELD_WIDTH = this.oViewProperties.attributes.fieldWidth;
+		this.LABEL_SIZE = this.oViewProperties.attributes.labelWidth;
+
+		//Call model information generation function
+		this.fn_GetModel();
+
+		// When binding is required for the selected field list, the viewdataset should be set.
+		this.oContents.View.attribute.viewdataset = "${VIEW_DATASET}";
+
+		//Call InitValue information generation function
+		this.oContents.View.InitValue = this.fn_GetInitValue();
+
+		//Call Object information generation function
+		this.oContents.View.Objects = this.fn_GetObjects();
+
+		//Call BindInfo information generation function
+		this.oContents.View.Bind = this.fn_GetBind(this.oContents.View.Bind);
+
+		//Call Script information generation function
+		this.oContents.View.Script = this.fn_GetScript();
+
+		//Clear unnecessary component information
+		this.fnClearContents();
+
+		//Convert view component information to String
+		sResult = JSON.stringify(this.oContents, null, "\t");
+//nexacro.trace(sResult);
+		return sResult;
+	};
+
+/************************************************************************************************
+ * Functions Related to the main() Execution Flow
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetModel
+	* Return       : model contents (JSON format)
+	* Description  : Function to generate a component source based on field information of the model entered by the user
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetModel = function() {
+		//Get View Component Width value
+		let nViewCompWidth = this.oContents.View.referenceinfo.realwidth;
+
+		//Get View Component Height value
+		if(this.oViewProperties.attributes.useTitle == "true"){
+
+			this.fn_makeTitleArea();
+			this.TITLE_HEIGHT = this.TITLE_HEIGHT + this.COMP_SPACE;
+		} else {
+			this.TITLE_HEIGHT = 0;
+		}
+
+		let nViewCompHeight = this.oContents.View.referenceinfo.realheight - this.TITLE_HEIGHT;
+
+		let oLayout;
+		//Get Layout information when layout attribute is set
+		if(this.oViewProperties.attributes.layout){
+			//Get Layout information
+			oLayout = this.lfn_StringToJson(this.oViewProperties.attributes.layout);
+		} else {
+			//Create Layout information when layout attribute is not set			
+			this.bNewLayout = true;
+
+			oLayout = this.fn_MakeLayout(nViewCompWidth, nViewCompHeight);
+
+			let sLayout = JSON.stringify(oLayout);
+			this.oViewPropertiesValue = {"layout" : JSON.parse(sLayout)};
+		}
+
+		//Call Layout calculation function
+		this.fn_CalcLayout(oLayout, nViewCompWidth, nViewCompHeight);
+
+		//Call Layout-based component generation function
+		this.fn_MakeCompByLayout(oLayout);
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetInitValue
+	* Parameter    :
+	* Return       : initvalue contents (JSON format)
+	* Description  : Function to generate <InitValue> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetInitValue = function(){
+
+		let oInitValue = [];
+		
+
+
+		return oInitValue;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetObjects
+	* Return       : objects contents (JSON format)
+	* Description  : Function to generate <Objects> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetObjects = function() {
+
+		//Initialize Object
+		let oObjects = [];
+
+		// InnerDataset information
+		var oInner = this.fn_GetInnerDataset(this.oFieldArray);
+
+		oObjects = oObjects.concat(oInner);
+		
+		//Return Object Information
+		return oObjects;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetBind
+	* Return       : bind contents (JSON format)
+	* Description  : Function to generate <Bind> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetBind = function()
+	{
+		let sBindDataset = "${VIEW_DATASET}";
+
+		let oBind = [];
+		let oBindItems = [];
+
+		let sCompId
+		let sFieldId;
+		let sCompType;
+		let sCompClassId;
+		let nBindItemCount = this.arrBindItems.length;
+		let sPropid ;
+
+		for(let i=0;i<nBindItemCount;i++) {
+			sCompId			= this.arrBindItems[i].compid;
+			sFieldId		= this.arrBindItems[i].fieldid;
+			sCompType		= this.arrBindItems[i].comptype;
+			sCompClassId	= this.arrBindItems[i].compclassid;
+
+			let oBindItem = {};
+			oBindItem.tag = "BindItem";
+			oBindItem.attribute = {};
+			oBindItem.attribute.id = "bind_"+sCompId;
+			oBindItem.attribute.compid = sCompId;
+			sPropid = "value";
+			if(sCompClassId=="Static" || sCompType == "static"){
+				sPropid = "text";
+			} else if(sCompClassId=="ImageViewer" || sCompType == "imageviewer"){
+				sPropid = "image";
+			} else if(sCompClassId=="WebView" || sCompClassId=="WebBrowser" || sCompType == "webview" || sCompType == "webbrowser"){
+				sPropid = "url";
+			} else if(sCompClassId=="AbstractSelectAny" || sCompType == "selectany"){
+				sPropid = "multivalue";
+			}
+			oBindItem.attribute.propid = sPropid;
+			oBindItem.attribute.datasetid = sBindDataset;
+			oBindItem.attribute.columnid = sFieldId;	
+
+			oBindItems[i] = oBindItem;			
+		}
+
+		oBind[oBind.length] = {"tag" : "Bind", "Bind" : oBindItems};
+
+		return oBind;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetScript
+	* Return       : script contents (JSON format)
+	* Description  : Function to generate <Script> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetScript = function() {
+
+		//Initialize Script Information
+		let oScript = {};
+		let sValue = "this._fnViewOnLoad = "
+					+ nexacro.replaceAll(nexacro.replaceAll(nexacro.replaceAll(this._fnViewOnLoad.toString(),"\r",""),"\n",""),"\t","")
+					+ ";"
+
+		oScript =
+		{
+			"tag": "Script",
+			"attribute": { "type" : "xscript5.1" },
+			"value": sValue
+		}
+		return oScript;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fnClearContents
+	* Return       : 
+	* Description  : Removes components created by viewTemplate
+	*---------------------------------------------------------------------------------------------*/
+	this.fnClearContents = function()
+	{
+		//Get original Layout information
+		let oLayout = this.oContents.View.View[0].Layouts[0].Layout;
+
+		//Get current Model information
+		let oModel = this.oContents.View.Model;
+		let oComp;
+		//If Layout exists
+		if(oLayout)
+		{
+			for (let i = oLayout.length - 1; i >= 0; i--)
+			{
+				//Remove components previously created via ViewTemplate
+				if (oLayout[i].attribute && oLayout[i].attribute._fieldid)
+				{
+					oLayout.splice(i, 1);
+				}
+				//Remove user-added components from Layout and append to end of Model
+				else
+				{
+					oComp = oLayout.splice(i, 1);
+					oModel[oModel.length] = {
+						"fieldid" : "",
+						"Components" : oComp
+					}
+				}
+			}
+		}
+	};
+
+
+/*===============================================================================================*/
+/* Model Generation Related Functions                                                            */
+/*===============================================================================================*/
+	/*----------------------------------------------------------------------------
+	// Title create function
+	----------------------------------------------------------------------------*/
+	this.fn_makeTitleArea = function(){
+		
+		let sText = this.oViewProperties.attributes.titletext;
+
+		if(!this.lfn_IsNull(sText)){
+			let oModel = this.oContents.View.Model;
+			oModel[oModel.length] = {"fieldid" : "TITLE","Components" : []};
+
+			// Create Title Static
+			let sCompId		= "sta_title";
+
+			let sCssClass	= "sta_WF_Title";
+
+			let oTitle = {};
+			oTitle.tag = "Static";
+			oTitle.attribute = {};
+			oTitle.attribute.id = sCompId;
+			oTitle.attribute.left = 0;
+			oTitle.attribute.top = 0;
+			oTitle.attribute.width = 300;
+			oTitle.attribute.height = this.TITLE_HEIGHT;
+			oTitle.attribute.text = sText;
+			oTitle.attribute.cssclass = sCssClass;
+			oTitle.attribute._fieldid = "TITLE";
+			oTitle.attribute._fieldcomptype = "label";
+
+			oModel[oModel.length-1].Components.push(oTitle);
+		}
+	};
+
+	/*----------------------------------------------------------------------------
+	// Layout create function
+	----------------------------------------------------------------------------*/
+	this.fn_MakeLayout = function(nViewCompWidth, nViewCompHeight)
+	{
+		let oLayout =
+		{
+			"columnsize" : [],
+			"rowsize" : [],
+			"celllist" : []
+		}
+		let oCell = {};
+
+		let nFieldWidth = this.fn_GetRealSize(this.FIELD_WIDTH, nViewCompWidth);
+		let nFieldHeight = this.fn_GetRealSize(this.FIELD_HEIGHT, nViewCompHeight);
+		let nFieldCnt = this.oFieldArray.fieldcount;
+		let nColCnt = nexacro.floor(nViewCompWidth/nFieldWidth);
+		let nRowCnt = nexacro.ceil(nFieldCnt/nColCnt);
+		let nColIdx = 0;
+		let nRowIdx = 0;
+		let sFieldId;
+
+		if(nColCnt>nFieldCnt)nColCnt = nFieldCnt;
+
+		for(let i=0;i<nColCnt;i++)
+		{
+			oLayout.columnsize[i] = nFieldWidth;
+		}
+
+		for(let i=0;i<nRowCnt;i++)
+		{
+			oLayout.rowsize[i] = nFieldHeight;
+		}
+
+		for(let i=0;i<nFieldCnt;i++)
+		{
+			if(i!=0)
+			{
+				if((i%(nColCnt)) == 0)
+				{
+					nColIdx = 0;
+					nRowIdx++;
+				}
+			}
+
+			sFieldId = this.oFieldArray.fields[i].id;
+			oCell = {};
+			oCell.col = nColIdx;
+			oCell.row = nRowIdx;
+			oCell.fieldlist = [sFieldId];
+			oLayout.celllist[i] = oCell;
+			nColIdx++;
+		}
+
+		return oLayout;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetRealSize
+	* Parameter    :
+					- sSize : size information (% or px)
+					- nParentSize : parent area size information
+	* Return       : nRealSize : size in px
+	* Description  : Function to calculate the actual size to use based on the registered size
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetRealSize = function(sSize, nParentSize){
+		let nRealSize;
+		let nSizeType;
+
+		nSizeType = sSize.replace(/[0-9]/g, "");
+
+		if(nSizeType=="%")
+		{
+			nRealSize = nexacro.toNumber(sSize.replace(/[^0-9]/g, ""));
+			nRealSize = (nRealSize/100) * nParentSize;
+		}else
+		{
+			nRealSize = nexacro.toNumber(sSize.replace(/[^0-9]/g, ""));
+		}
+
+		return nRealSize;
+	};
+
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_CalcLayout
+	* Parameter    : obj
+	* Return       :
+					- oLayout : layout setting information
+					- nViewCompWidth : View Component Real Width
+					- nViewCompHeight : View Component Real Height
+	* Description  : Layout calculation function
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_CalcLayout = function(oLayout, nViewCompWidth, nViewCompHeight)
+	{
+		//CellList information set in layout
+		let arrCellList = oLayout.celllist;
+
+		//ColumnSize information set in layout
+		let arrColSize = oLayout.columnsize;
+
+		//RowSize information set in layout
+		let arrRowSize = oLayout.rowsize;
+
+		//CellList count
+		let nCellCnt = arrCellList.length;
+
+		//Sum of Column/Row sizes not set to -1
+		let nAllColSize = 0;
+		let nAllRowSize = 0;
+
+		//Count of Column/Row sizes set to -1
+		let nNoColSizeCnt = 0;
+		let nNoRowSizeCnt = 0;
+
+		//Replacement size when Column/Row size is -1
+		let nColSizeDef = 0;
+		let nRowSizeDef = 0 ;
+
+		let oCell;
+		let nCol, nRow, nColSpan, nRowSpan;
+		let nColSize, nRowSize;
+
+		//Calculate sum of Column sizes not set to -1
+		nAllColSize = arrColSize.reduce(function (pre, value){
+			if(value==-1)return pre;
+			else return pre + value;
+		});
+
+		//Calculate sum of Row sizes not set to -1
+		nAllRowSize = arrRowSize.reduce(function (pre, value){
+			if(value==-1)return pre;
+			else return pre + value;
+		});
+
+		if(nAllColSize==-1)nAllColSize = 0;
+
+		if(nAllRowSize==-1)nAllRowSize = 0;
+
+		//Calculate count of Column/Row set to -1
+		nNoColSizeCnt = arrColSize.filter(arrColSize=>arrColSize==-1).length;
+		nNoRowSizeCnt = arrRowSize.filter(arrRowSize=>arrRowSize==-1).length;
+
+		//When Column/Row set to -1 exists
+		//(View Component size - (sum of Column/Row sizes not set to -1)) / count of Column/Row set to -1
+		if(nNoColSizeCnt>0)nColSizeDef = (nViewCompWidth - nAllColSize)/nNoColSizeCnt;
+		if(nNoRowSizeCnt>0)nRowSizeDef = (nViewCompHeight - nAllRowSize)/nNoRowSizeCnt;
+
+		//Save Column/Row default size in layout
+		oLayout.colsizedef = nColSizeDef;
+		oLayout.rowsizedef = nRowSizeDef;
+
+		//Calculate field position for each Cell
+		for(let i=0;i<nCellCnt;i++)
+		{
+			//Get information set in Cell
+			oCell = arrCellList[i];
+			nCol = nexacro.toNumber(oCell.col);
+			nRow = nexacro.toNumber(oCell.row);
+			nColSpan = nexacro.toNumber(oCell.colspan);
+			nRowSpan = nexacro.toNumber(oCell.rowspan);
+
+			//Initialize to 1 when Col/RowSpan value is not set
+			if(!nColSpan)nColSpan = 1;
+			if(!nRowSpan)nRowSpan = 1;
+
+			//Calculate Width/Height of the Cell
+			nColSize = this.fn_GetCellSize(oLayout.columnsize, nCol, nColSpan, nColSizeDef);
+			nRowSize = this.fn_GetCellSize(oLayout.rowsize, nRow, nRowSpan, nRowSizeDef);
+
+			//Save Width/Height value in the Cell
+			oCell.realcolsize = nColSize;
+			oCell.realrowsize = nRowSize;
+
+			//When fields connected to the Cell exist
+			if(oCell.fieldlist)
+			{
+				//Calculate position of Field to display in the Cell
+				oCell.fieldposition = this.fn_CalcFieldByLayout(nColSize, nRowSize, oCell.fieldlist);
+			}
+		}
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_CalcFieldByLayout
+	* Parameter    :
+					- nColSize : Width of Cell to display
+					- nRowSize : Height of Cell to display
+					- arrFieldInCellList : Field List added to Cell
+	* Return       : arrFieldPosition : Object Array containing Field position information
+	* Description  : Function to calculate position of Field to be displayed
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_CalcFieldByLayout = function(nColSize, nRowSize, arrFieldInCellList)
+	{
+		let nLeft = 0;
+		let nTop = 0;
+		let nRowIdx = 0;
+		let nColIdx = 0;
+		let nLastCol = 0;
+		let nLastRow = 0;
+
+		let nFiledHeightMax = 0;
+
+		let nTemp;
+
+		//Get Field list registered in Model
+		let arrFieldList = this.oFieldArray.fields;
+
+		//Count of fields connected to Cell
+		let nFieldInCellCnt;
+
+		//Object Array to store Field position information
+		let arrFieldPosition = [];
+
+		//Col Size excluding label area
+		let nRealColSize;
+
+		//Label Width
+		let nLabelWidth = 0;
+
+		//Component Left
+		let nCompLeft = this.COMP_PADDING_LEFT;
+		
+		//Component Top
+		let nCompTop = 0;
+
+		//Component Width
+		let nCompWidth;
+
+		//Confirm count with Field list connected to Cell
+		nFieldInCellCnt = arrFieldInCellList.length;
+
+		for(let j=0;j<nFieldInCellCnt;j++)
+		{
+			//Get Field information registered in Model based on Field connected to Cell
+			sFieldId =  arrFieldInCellList[j];
+			oField = arrFieldList.filter(arrFieldList=>arrFieldList.id==sFieldId)[0];
+
+			//Get label Width information set on first Field
+			if(j==0 && oField.uselabel=="true"){
+				nLabelWidth = nexacro.toNumber(this.LABEL_SIZE);
+			}
+
+			//Calculate Col Size excluding label area
+			nRealColSize = nColSize - nLabelWidth;
+
+			//Calculate Left/Top/Width/Height values where the field will be displayed
+			nCompTop = this.COMP_PADDING_TOP;
+			nCompWidth = (nRealColSize - (this.COMP_PADDING_LEFT + this.COMP_PADDING_RIGHT + ((nFieldInCellCnt-1)*this.COMP_SPACE)))/nFieldInCellCnt;
+
+			//Save component position information
+			arrFieldPosition[j] =
+			{
+				"fieldid" : sFieldId,
+				"left" : nCompLeft,
+				"top" : nCompTop,
+				"width" : nCompWidth,
+			};
+
+			//Set Left position value for next component
+			nCompLeft = nCompLeft + nCompWidth + this.COMP_SPACE;
+		}
+
+		//Return Field position information
+		return arrFieldPosition;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetCellSize
+	* Parameter    :
+					- arrList : columnsize or rowsize size information (% or px)
+					- nIdx : starting Column/Row Index information
+					- nSpan : Column/Row Span information
+					- nDefSize : default size information to use when -1
+
+	* Return       : nSize : size in px
+	* Description  : Function to calculate Cell Width/Height
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetCellSize = function(arrList, nIdx, nSpan, nDefSize)
+	{
+		let nSize = 0;
+
+		for(let i=nIdx; i<nIdx+nSpan; i++)
+		{
+			if(nexacro.toNumber(arrList[i])==-1)
+			{
+				nSize += nexacro.toNumber(nDefSize);
+			}else
+			{
+				nSize += nexacro.toNumber(arrList[i]);
+			}
+		}
+
+		return nSize;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_MakeCompByLayout
+	* Parameter    :
+					- oLayout : layout setting information
+	* Return       :
+	* Description  : Layout-based component generation function
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_MakeCompByLayout = function(oLayout)
+	{
+		//CellList information set in layout
+		let arrCellList = oLayout.celllist;
+
+		//ColumnSize information set in layout
+		let arrColSize = oLayout.columnsize;
+
+		//RowSize information set in layout
+		let arrRowSize = oLayout.rowsize;
+
+		//Get Column/Row default size
+		let nColSizeDef = oLayout.colsizedef;
+		let nRowSizeDef = oLayout.rowsizedef;
+
+		let nCol, nRow, nColSpan, nRowSpan;
+		let oCell;
+
+		let bEndCol;
+		let nColCnt = oLayout.columnsize.length;
+
+		for(let i=0;i<arrCellList.length;i++)
+		{
+			oCell = arrCellList[i];
+			nCol = nexacro.toNumber(oCell.col);
+			nRow = nexacro.toNumber(oCell.row);
+			nColSpan = nexacro.toNumber(oCell.colspan);
+			nRowSpan = nexacro.toNumber(oCell.rowspan);
+
+			//Initialize to 1 when Col/RowSpan value is not set
+			if(!nColSpan)nColSpan = 1;
+			if(!nRowSpan)nRowSpan = 1;
+
+			//Continue when Cell has no Field
+			if(!oCell.fieldlist)continue;
+
+			//Get current Cell Left/Top position value
+			nLeft = this.fn_GetCellSize(arrColSize, 0, nCol, nColSizeDef);
+			nTop = this.fn_GetCellSize(arrRowSize, 0, nRow, nRowSizeDef) + this.TITLE_HEIGHT;
+
+			if((nCol+(nColSpan-1))==nColCnt-1){
+				bEndCol = true;
+			} else {
+				bEndCol = false;
+			}
+
+			this.fn_MakeComp(nLeft, nTop, oCell, nRow, bEndCol);
+		}
+		//nexacro.trace(JSON.stringify(oLayout, null, "\t"));
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_MakeComp
+	* Parameter    :
+					- nBaseLeft : base coordinate for creating component (Left)
+					- nBaseTop : base coordinate for creating component (Top)
+					- nBaseWidth : base coordinate for creating component (Width)
+					- nBaseHeight : base coordinate for creating component (Height)
+					- arrFields : Object Array containing Field position information
+					- nLayoutRow : current Row Index based on layout
+					- bEndCol : whether it is the last Col Index based on layout
+	* Return       :
+	* Description  : Component tag generation function
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_MakeComp = function(nBaseLeft, nBaseTop, oCell, nLayoutRow, bEndCol)
+	{
+		let sFieldId;
+		let oField;
+		let oFieldPosition;
+
+		let nBaseWidth = oCell.realcolsize;
+		let nBaseHeight = oCell.realrowsize;
+		let arrFields = oCell.fieldposition;
+
+		let oModel = this.oContents.View.Model;
+		let oCompClass;
+		let sLabelCssClass = this.LABEL_CSSCLASS;
+		let sFieldBgCssClass = this.COMP_BG_CSSCLASS;
+
+		let oBg = {};
+		let oLabel = {};
+		let oTextFieldBtn = {};
+
+		for(let i=0;i<arrFields.length;i++)
+		{
+			//Get Field object
+			oFieldPosition = arrFields[i];
+			sFieldId = oFieldPosition.fieldid;
+			oField = this.oFieldArray.fields.filter(fields=>fields.id==sFieldId)[0];
+			if(oCell.col == 0){
+				oModel[oModel.length] = {"fieldid" : sFieldId,"Components" : []};
+
+				oBg.tag = "Static";
+				oBg.attribute = {};
+				oBg.attribute.id = this.fn_GetCompId("st_"+sFieldId+"_bg");
+				oBg.attribute.left = nBaseLeft;
+				oBg.attribute.top = nBaseTop - (nLayoutRow * 1);
+				oBg.attribute.height = nBaseHeight;
+				oBg.attribute.right = 0;
+				oBg.attribute.cssclass = sFieldBgCssClass;
+				oBg.attribute._fieldid = "_fieldcomptype";
+				oBg.attribute._fieldcomptype = "bg";
+
+				oBg = this.fnMergeField(oBg);
+				oModel[oModel.length-1].Components.push(oBg);
+			}
+
+			/*Create label*/
+			if(i==0 && oField.uselabel=="true") {
+				oLabel.tag = "Static";
+				oLabel.attribute = {};
+				oLabel.attribute.id = this.fn_GetCompId("st_"+sFieldId+"_Label");
+				oLabel.attribute.left = nBaseLeft;
+				oLabel.attribute.top = nBaseTop - (nLayoutRow * 1);
+				oLabel.attribute.width = nexacro.toNumber(this.LABEL_SIZE);
+				oLabel.attribute.height = nBaseHeight;
+				oLabel.attribute.text = oField.label;
+				oLabel.attribute.cssclass = sLabelCssClass;
+				oLabel.attribute._fieldid = sFieldId;
+				oLabel.attribute._fieldcomptype = "label";
+
+				oLabel = this.fnMergeField(oLabel);
+				oModel[oModel.length-1].Components.push(oLabel);
+			}
+
+			//Get component naming rule information
+			oCompClass = this.lfn_GetCompClass(oField.comptype, oField);
+
+			//Get component Css Class Id value
+			sCompCssClass = oField.cssclass;
+			
+			let oComp = {};
+			oComp.tag = oCompClass.classId;
+			oComp.attribute = {};
+			oComp.attribute.id = this.fn_GetCompId(oCompClass.prefix+"_"+sFieldId);
+			oComp.attribute.top = nBaseTop + oFieldPosition.top - (nLayoutRow * 1);
+			oComp.attribute.height = nBaseHeight-this.COMP_PADDING_TOP - this.COMP_PADDING_BOTTOM;			
+			oComp.attribute.cssclass = oField.cssclass;
+			oComp.attribute._fieldid = sFieldId;
+			oComp.attribute._fieldcomptype = "comp";
+
+			if(oLabel.tag){
+				oComp.attribute.left = nBaseLeft + nexacro.toNumber(this.LABEL_SIZE) + oFieldPosition.left;
+			} else {
+				oComp.attribute.left = nBaseLeft + oFieldPosition.left;
+			}
+
+			if(oField.comptype == "textfield"){
+				if(arrFields.length-1==i&&bEndCol==true){
+					oComp.attribute.right = this.COMP_PADDING_RIGHT + (nexacro.toNumber(this.FIELD_HEIGHT.replace(/[^0-9]/g, "")) - this.COMP_PADDING_TOP - this.COMP_PADDING_BOTTOM) + this.COMP_PADDING_RIGHT + 5;
+				} else {
+					oComp.attribute.width = oFieldPosition.width - (nexacro.toNumber(this.FIELD_HEIGHT.replace(/[^0-9]/g, "")) - this.COMP_PADDING_TOP - this.COMP_PADDING_BOTTOM) - 5;
+				}
+			} else {
+				if(arrFields.length-1==i&&bEndCol==true){
+					oComp.attribute.right = this.COMP_PADDING_RIGHT;
+				} else {
+					oComp.attribute.width = oFieldPosition.width;
+				}
+			}
+			
+			// Set default attributes per component
+			if (!this.lfn_IsNull(oCompClass.attribute)){
+				Object.assign(oComp.attribute, oCompClass.attribute);
+			}
+
+
+			//When component Type is Button, add label text to text attribute
+			if(oField.comptype=="button")
+			{
+				oComp.attribute.text = oField.label;
+			}
+			//When component Type is Static, add label text to text attribute
+			else if(oField.comptype=="static")
+			{
+				oComp.attribute.text = oField.label;
+			}
+			//When component Type is Checkbox, add label text to text attribute
+			else if(oField.comptype=="checkbox"  )
+			{
+				oComp.attribute.text = oField.label;
+			} 
+			//When component Type is auto and Field Type is Boolean
+			else if(oField.comptype=="auto" && oField.fieldtype == "Boolean")
+			{
+				oComp.attribute.text = oField.label;
+						oComp.attribute.falsevalue = "0";		//Used in next only
+						oComp.attribute.truevalue = "1";		//Used in next only
+			} 
+
+			//Merge component information
+			oComp = this.fnMergeField(oComp);
+			
+			//Add component to Model
+			oModel[oModel.length-1].Components.push(oComp);
+
+			//When not Button or Static, add information for BindItem creation
+			if(oField.comptype!="button"&&oField.comptype!="static")
+			{
+				//Add component Id and Field Id to BindItems Array for Bind processing
+				arrBindItems[arrBindItems.length] = {"compid" : oComp.attribute.id, "fieldid" : sFieldId, "comptype" : oField.comptype};
+			}
+			
+			//When textfield, additionally create button after Edit
+			if(oField.comptype == "textfield"){
+				let nTextFieldBtnWidth = nexacro.toNumber(this.FIELD_HEIGHT.replace(/[^0-9]/g, "")) - this.COMP_PADDING_TOP - this.COMP_PADDING_BOTTOM;
+				
+				oTextFieldBtn.tag = "Button";
+				oTextFieldBtn.attribute = {};
+				oTextFieldBtn.attribute.id = this.fn_GetCompId("btn_" + sFieldId);
+				oTextFieldBtn.attribute.left = oComp.attribute.id+":5px";
+				oTextFieldBtn.attribute.top = oComp.attribute.top;
+				oTextFieldBtn.attribute.width = nTextFieldBtnWidth;
+				oTextFieldBtn.attribute.height = nBaseHeight - this.COMP_PADDING_TOP - this.COMP_PADDING_BOTTOM;
+				oTextFieldBtn.attribute.cssclass = "btn_WF_EdiSch";
+				oTextFieldBtn.attribute._fieldid = "B_"+sFieldId;
+				oTextFieldBtn.attribute._fieldcomptype = "comp";
+				
+				oTextFieldBtn = this.fnMergeField(oTextFieldBtn);
+				oModel[oModel.length-1].Components.push(oTextFieldBtn);
+			}
+		}
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetCompId
+	* Parameter    :
+					- sCompId : component id to create
+	* Return       : sRtnCompId : Component ID
+	* Description  : Component ID generation function
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetCompId = function(sCompId)
+	{
+
+		let sNewCompId = "";
+		if (this.COMP_NAMING_RULE == "C") {
+			sNewCompId = this.lfn_ToCamelCase(sCompId);
+		} else if (this.COMP_NAMING_RULE == "S") {
+			sNewCompId = this.lfn_ToSnakeCase(sCompId);
+		} else if (this.COMP_NAMING_RULE == "LS") {
+			sNewCompId = this.lfn_ToLowerSnakeCase(sCompId);
+		} else {
+			sNewCompId = sCompId;
+		}
+
+		//Check if component created from same Field exists
+		let arrTemp = this.arrCompIds.filter(arrCompIds=>arrCompIds.indexOf(sNewCompId)==0);
+		let sRtnCompId;
+
+		//When component created from same Field exists
+		if(arrTemp.length>0){
+			sRtnCompId = sNewCompId+"_"+arrTemp.length;
+		} else {
+			//When no component created from same Field exists
+			sRtnCompId = sNewCompId;
+		}	
+
+		//Add to component ID management Array
+		this.arrCompIds[this.arrCompIds.length] = sRtnCompId;
+
+		//Return component ID
+		return sRtnCompId;
+	}
+
+
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fnMergeField
+	* Parameter    : oComp : current component information
+	* Return       : oComp : changed component information
+	* Description  : Function to apply information defined in oContents to the component to be updated
+	*---------------------------------------------------------------------------------------------*/
+	this.fnMergeField = function(oComp)
+	{
+		//Do not merge when Layout is newly created
+		if(this.bNewLayout==true)return oComp;
+      
+		//Get original Layout information
+		let oLayout = this.oContents.View.View[0].Layouts[0].Layout;
+
+		//If Layout exists
+		if(oLayout)
+		{
+			let objPropsOrg;
+			let objProps;
+
+			//Current component Field Id
+			let sFieldId = oComp.attribute._fieldid;
+
+			//Current component Field Comp Type (comp, label, bg, etc.)
+			let sFieldCompType = oComp.attribute._fieldcomptype;
+
+			//Search whether current component information exists in Layout information
+			let nIdx = oLayout.findIndex(item => item.attribute._fieldid === sFieldId&&item.attribute._fieldcomptype === sFieldCompType);
+
+			//When information exists
+			if(nIdx>-1)
+			{
+				//Get current component attribute information
+				objProps = oComp.attribute;
+
+				//Get component attributes set in Layout
+				oFieldOrg = oLayout.splice(nIdx, 1)[0];
+				objPropsOrg = oFieldOrg.attribute;
+
+				//Do not merge existing attributes when component type has changed
+				if(oComp.tag!=oFieldOrg.tag){
+					return oComp;
+				}
+
+				//Exclude position-related attributes
+				let arrExcludeKeys = ["top", "left", "width", "height", "right", "bottom"];
+
+				// Add values from Layout to Model
+				Object.keys(objPropsOrg).forEach(
+               		key => {
+								if (arrExcludeKeys.includes(key)){
+									return;
+								}
+
+								if(this.lfn_IsNull(objPropsOrg[key])==true){
+									return;
+								}
+
+								if(this.lfn_IsNull(objProps[key])==false){
+									return;
+								}
+
+								objProps[key] = objPropsOrg[key];
+                  			}
+				);
+			}
+		}
+		return oComp;
+	}
+/************************************************************************************************
+ * Functions called from fn_GetObjects function
+ ************************************************************************************************/
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetInnerDataset
+	* Parameter    : oFieldArray : model field data
+	* Return       : Returns InnerDataset object Json Array
+	* Description  : Function to create dataset object Json based on values set in model Field options attribute
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetInnerDataset = function(objFieldArr)	{
+		let oModels = this.oContents.View.Model;
+		let oInnerDatasets = [];
+
+		//Get model Field count
+		let nCount = objFieldArr.fieldcount;
+		let nRowCount = 0;
+
+		let oField;
+		let sFieldId;
+		let sFieldType;
+		let sCodeField;
+		let sNameField;
+		let sOptionsInfo
+		let oOptionsInfo;
+		let sInnerDSList;
+		let oRowInfo;
+		let sInnerDatasetId;
+		let oInnerDataset;
+		let arrInnerDSColumn;
+		let arrInnerDSColumns
+		let oInnerField;
+
+		let oFieldModel;
+		let oFieldComps;
+		let oFieldComp;
+		let sCompTag;
+
+		//Create column information for each model Field count
+		for(let i=0;i<nCount;i++) {
+			oField = objFieldArr.fields[i];
+			sFieldId 	= oField["id"];
+			sFieldType	= oField["fieldtype"];
+			sDataType 	= oField["datatype"];
+
+			sOptionsInfo 	= oField[this.FIELD_OPTIONS];
+			if (typeof sOptionsInfo === "object") {
+				sOptionsInfo = JSON.stringify(sOptionsInfo, null);
+			}
+
+			sInnerDatasetId = "";
+
+			// Select / MultiSelect related Field
+			sCodeField = "";
+			sNameField = "";
+
+			// Date / DateTime related Field
+			sBackgroundField = "";
+			sBorderField = "";
+			sDateField = "";
+			sTextColorField = "";
+
+			nRowCount = 0;
+
+			if (this.lfn_IsNotNull(sOptionsInfo)) {
+				if (sFieldType == "Select" || sFieldType == "MultiSelect") {
+					sInnerDatasetId = this.fn_GetCompId("innerdataset" + "_" + sFieldId);
+
+					if (typeof sOptionsInfo === "string") {
+						sOptionsInfo = sOptionsInfo.replace(/\n/g, '');
+						oOptionsInfo = this.lfn_StringToJson(sOptionsInfo);
+					} else {
+						oOptionsInfo = sOptionsInfo;
+					}
+
+					sInnerDSList = oOptionsInfo["innerdataset_list"];
+
+					if (sInnerDSList && Object.keys(sInnerDSList).length > 0) // When innerdataset information exists,
+					{
+						let arrInnerDSLabelList = sInnerDSList.map(option => option.label);
+						let arrInnerDSValueList = sInnerDSList.map(option => option.value);
+
+						arrInnerDSColumns = new Array();
+
+						sCodeField = "code";
+						sNameField = "data";
+
+						// 1) Create InnerDataset
+						// Create InnerDataset column information
+						for(let j=0; j<2; j++)
+						{
+							oInnerField = {
+								"id" : j==0 ? "code" : "data"
+								, "datatype" : "STRING"
+								, "datasize" : "256"
+							};
+							arrInnerDSColumns.push(oInnerField);
+						}
+
+						arrInnerDSColumn = {"fieldcount" : 2, "fields" : arrInnerDSColumns}
+						nRowCount = arrInnerDSLabelList.length;
+
+						oRowInfo = new Array();
+						for (let k=0; k<nRowCount; k++)
+						{
+							oRowInfo.push({"code":arrInnerDSValueList[k], "data":arrInnerDSLabelList[k]});
+						}
+
+						// Create InnerDataset object information
+						oInnerDataset = this.lfn_GetDataset(sInnerDatasetId, arrInnerDSColumn, nRowCount, oRowInfo);
+
+						// Add to InnerDataset return information
+						oInnerDatasets.push(oInnerDataset);
+
+						// 2) Set InnerDataset on component
+						// Find model information corresponding to fieldid
+						//oFieldModel = oModels.find(oModel => String("," + oModel.fieldid + ",").indexOf("," + sFieldId + ",") >= 0);
+						for(let i=0;i<oModels.length;i++) {
+							let oModel = oModels[i];
+							for(let j=0;j<oModel.Components.length;j++) {
+								let sCompFieldId = oModel.Components[j].attribute._fieldid;
+								let sCompFieldType = oModel.Components[j].attribute._fieldcomptype;
+								if(sCompFieldId==sFieldId&&sCompFieldType=="comp") {
+									oFieldComp = oModel.Components[j];
+								}
+							}
+						}
+
+						// Set Innerdataset-related attributes on component in model corresponding to fieldid
+						if (oFieldComp){
+							sCompTag = oFieldComp["tag"];
+
+							if (sCompTag == "Combo" || sCompTag == "Radio" || sCompTag == "ListBox"
+								|| sCompTag == "MultiCombo" || sCompTag == "CheckBoxSet"
+								|| sCompTag == "AbstractSelectOne" || sCompTag == "AbstractSelectAny")
+							{
+								oFieldComp["attribute"]["innerdataset"] = sInnerDatasetId;
+								if (this.lfn_IsNotNull(sCodeField))	{
+									oFieldComp["attribute"]["codecolumn"] = sCodeField;
+								}
+								if (this.lfn_IsNotNull(sNameField))	{
+									oFieldComp["attribute"]["datacolumn"] = sNameField;
+								}
+							}
+						}
+					}
+				} else if (sFieldType == "Date" || sFieldType == "DateTime") {
+					sInnerDatasetId = this.fn_GetCompId("innerdataset" + "_" + sFieldId);
+					sOptionsInfo = sOptionsInfo.replace(/\n/g, '');
+					oOptionsInfo = this.lfn_StringToJson(sOptionsInfo);
+
+					sInnerDSList = oOptionsInfo["innerdataset_list"];
+
+					if (sInnerDSList && Object.keys(sInnerDSList).length > 0) // When innerdataset information exists,
+					{
+						let arrInnerDSBackgroundList = sInnerDSList.map(option => option.background);
+						let arrInnerDSBorderList = sInnerDSList.map(option => option.border);
+						let arrInnerDSDateList = sInnerDSList.map(option => option.date);
+						let arrInnerDSTextColorList = sInnerDSList.map(option => option.textColor);
+
+						arrInnerDSColumns = new Array();
+
+						sBackgroundField = "backgroundcolumn";
+						sBorderField = "bordercolumn";
+						sDateField = "datecolumn";
+						sTextColorField = "textcolorcolumn";
+
+						// 1) Create InnerDataset
+						// Create InnerDataset column information
+						var arrInnerDSColumnList = [sBackgroundField, sBorderField, sDateField, sTextColorField];
+						for(let j=0; j<arrInnerDSColumnList.length; j++)
+						{
+							oInnerField = {
+								"id" : arrInnerDSColumnList[j]
+								, "datatype" : "STRING"
+								, "datasize" : "256"
+							};
+							arrInnerDSColumns.push(oInnerField);
+						}
+
+						arrInnerDSColumn = {"fieldcount" : 4, "fields" : arrInnerDSColumns}
+						nRowCount = sInnerDSList.length;
+
+						oRowInfo = new Array();
+						for (let k=0; k<nRowCount; k++)
+						{
+							oRowInfo.push({"backgroundcolumn":arrInnerDSBackgroundList[k]
+							             , "bordercolumn":arrInnerDSBorderList[k]
+										 , "datecolumn":arrInnerDSDateList[k]
+										 , "textcolorcolumn":arrInnerDSTextColorList[k]});
+						}
+
+						// Create InnerDataset object information
+						oInnerDataset = this.lfn_GetDataset(sInnerDatasetId, arrInnerDSColumn, nRowCount, oRowInfo);
+
+						// Add to InnerDataset return information
+						oInnerDatasets.push(oInnerDataset);
+
+						// 2) Set InnerDataset on component
+						// Find model information corresponding to fieldid
+						oFieldModel = oModels.find(oModel => String("," + oModel.fieldid + ",").indexOf("," + sFieldId + ",") >= 0);
+
+						// Set Innerdataset-related attributes on component in model corresponding to fieldid
+						if (oFieldModel){
+							oFieldComps = oFieldModel["Components"];
+							for(let k=0;k<oFieldComps.length;k++){
+								oFieldComp = oFieldComps[k];
+								sCompTag = oFieldComp["tag"];
+
+								if (sCompTag == "Calendar" || sCompTag == "DateField"){
+									oFieldComp["attribute"]["innerdataset"] = sInnerDatasetId;
+
+									if (this.lfn_IsNotNull(sBackgroundField)){
+										oFieldComp["attribute"]["backgroundcolumn"] = sBackgroundField;
+									}	
+									if (this.lfn_IsNotNull(sBorderField)){
+										oFieldComp["attribute"]["bordercolumn"] = sBorderField;
+									}	
+									if (this.lfn_IsNotNull(sDateField)){
+										oFieldComp["attribute"]["datecolumn"] = sDateField;
+									}	
+									if (this.lfn_IsNotNull(sTextColorField)){
+										oFieldComp["attribute"]["textcolorcolumn"] = sTextColorField;
+									}	
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return oInnerDatasets;
+	};
+/*===============================================================================================*/
+/* List of functions defined inside the script generated by fn_GetScript
+/*-----------------------------------------------------------------------------------------------*/
+/* Notes: 1. Do not include comments inside these functions.                                      */
+/*        2. Escape characters such as '\r, \n, \t' must not be used.                          */
+/*===============================================================================================*/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : _fnViewOnLoad
+	* Description  : Handles the onload event processing for the view component
+	*---------------------------------------------------------------------------------------------*/
+	this._fnViewOnLoad = function(objForm){
+		/* Sets the view form reference so that functions declared in the view can access it */
+		this._ownerForm = objForm;
+	};]]>
+  </Script>
+  <TestData>
+    <TestFields><![CDATA[{
+    "fields": [
+        {
+            "id": "field1",
+            "label": "Field1",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Boolean",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "truevalue": "Y",
+                "falsevalue": "N"
+            }
+        },
+        {
+            "id": "field2",
+            "label": "Field2",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Date",
+            "datatype": "DATE",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "dataformat": "yyyy-MM-dd"
+            }
+        },
+        {
+            "id": "field3",
+            "label": "Field3",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Time",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field4",
+            "label": "Field4",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "DateTime",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field5",
+            "label": "Field5",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "FromToDate",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field6",
+            "label": "Field6",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Email",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field7",
+            "label": "Field7",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Image",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field8",
+            "label": "Field8",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Label",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field9",
+            "label": "Field9",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Text",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field10",
+            "label": "Field10",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "LongText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field11",
+            "label": "Field11",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiLineText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field12",
+            "label": "Field12",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Password",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field13",
+            "label": "Field13",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Number",
+            "datatype": "INT",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field14",
+            "label": "Field14",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Phone",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field15",
+            "label": "Field15",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Price",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field16",
+            "label": "Field16",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Select",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "innerdataset_list": [
+                    {
+                        "label": "TOBESOFT",
+                        "value": "01"
+                    },
+                    {
+                        "label": "A Company",
+                        "value": "02"
+                    },
+                    {
+                        "label": "B Company",
+                        "value": "03"
+                    },
+                    {
+                        "label": "C Company",
+                        "value": "04"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "field17",
+            "label": "Field17",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiSelect",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field18",
+            "label": "Field18",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "ProgressBar",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        }
+    ]
+}]]>
+    </TestFields>
+    <TestViewProperties><![CDATA[{
+    "attributes": {
+        "titletext": "This is title",
+        "fieldwidth": 250,
+        "labelwidth": 100
+    }
+}]]>
+    </TestViewProperties>
+  </TestData>
+</ViewTemplateInfo>

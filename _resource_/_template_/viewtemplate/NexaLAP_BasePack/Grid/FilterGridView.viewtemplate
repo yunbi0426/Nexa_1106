@@ -1,0 +1,1674 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ViewTemplateInfo version="2.0">
+  <ViewTemplate id="FilterGridView" viewtype="Grid" description_en="description of the view template"/>
+  <Script version="1.0" type="xscript5.1"><![CDATA[/************************************************************************************************
+*  @FileName 	FilterGridView
+*  @Creator 	Tobesoft
+*  @CreateDate 	2026.01.02
+*  @Desction    
+*  @Version		1.0.0.0
+*************************************************************************************************
+*  Revision History
+*************************************************************************************************
+*  Date          		Modifier                Description
+*************************************************************************************************
+*  2026.01.02     		Tobesoft       	        Initial creation
+************************************************************************************************/
+/************************************************************************************************
+ * Include Declarations
+ ************************************************************************************************/
+  	include "../_lib_/util.xjs";
+	include "../_lib_/basicCommon.xjs";
+/************************************************************************************************
+ * Variable Definitions
+ ************************************************************************************************/
+	//-------------------------------------------------------------------------------------------
+	// View-related constants
+	//-------------------------------------------------------------------------------------------
+	this.GRID_TOP_POSITION = 0;
+	//--------------------------------------------------------------------------------------------------------
+	// Constants related to title object
+	//--------------------------------------------------------------------------------------------------------
+	// Whether to display total count in title area
+	this.TITLE_HEIGHT 	= 44;
+	this.TITLE_TEXT 	= "";
+	this.USE_FILTER_SEARCH	= "false";
+
+	//--------------------------------------------------------------------------------------------------------
+	// Constants related to Grid Button/SearchFilter objects
+	//--------------------------------------------------------------------------------------------------------
+	this.COMP_HEIGHT = 30;
+	this.COMP_BOTTOM_PADING = 8;
+	//--------------------------------------------------------------------------------------------------------
+	// Constants related to grid object
+	//--------------------------------------------------------------------------------------------------------
+	this.DISPLAY_TYPE	= "auto";
+	this.EDIT_TYPE		= "none";
+
+	// Grid autofittype property default value
+	this.AUTOFIT_TYPE	= "col"; // Field-level size adjustment is not supported, so column-based autofit is set as default.
+	
+	// Grid Cell displaytype
+	this.ARR_GRD_DISPLAY_TYPE = ["auto", "normal", "none", "buttoncontrol", "calendarcontrol", "date", "checkboxcontrol", "combocontrol"
+	                           , "combotext", "currency", "decoratetext", "editcontrol", "imagecontrol", "mask", "maskeditcontrol", "multicombocontrol"
+							   , "number",  "progressbarcontrol",  "text",  "textareacontrol",  "treeitemcontrol"];	
+	// Grid Cell edittype
+	this.ARR_GRD_EDIT_TYPE = ["auto", "normal", "none", "button", "checkbox", "combo", "date", "mask"
+	                        , "multicombo", "readonly", "text", "textarea", "tree" ];
+	//-------------------------------------------------------------------------------------------
+	// View-related variables
+	//-------------------------------------------------------------------------------------------
+   // Whether Layout is newly created
+   this.bNewLayout = false;
+
+/************************************************************************************************
+ * Required Function Area for NexaLAP Studio
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     	: set_viewProperties
+	* Return       	: View generation attribute list (JSON format)
+	* Description : Obtain a list of custom attributes required for view generation
+	*---------------------------------------------------------------------------------------------*/
+	this.set_viewProperties = function()
+	{
+		let sViewAttr = "";
+		let oViewAttr = {"attributes" : []};
+		let oProperties = {};
+		
+		// Whether to display title
+		oProperties={};
+		oProperties.id 				= "useTitle";
+		oProperties.displaytext 	= "Use title";
+		oProperties.edittype 		= "Boolean";
+		oProperties.defaultvalue 	= "false";
+		oProperties.description 	= "Display of Title";
+		oProperties.group			= "Title";
+		oViewAttr.attributes.push(oProperties);
+				
+		// Title text input properties
+		oProperties={};
+		oProperties.id 				= "titletext";
+		oProperties.displaytext 	= "Title text";
+		oProperties.edittype 		= "String";
+		oProperties.defaultvalue 	= this.TITLE_TEXT;
+		oProperties.description 	= "Set the title text (Other fields will not be created if title text is not entered)";
+		oProperties.group			= "Title";
+		oViewAttr.attributes.push(oProperties);
+
+		// Grid Button settings
+		oProperties={};
+		oProperties.id 				= "gridButton";
+		oProperties.displaytext 	= "Grid buttons";
+		oProperties.edittype 		= "String";
+		oProperties.defaultvalue 	= "";
+		oProperties.description 	= "Set the Grid button create";
+		oViewAttr.attributes.push(oProperties);
+		
+		// Grid Layout settings
+		oProperties={};
+		oProperties.id 				= "gridlayout";
+		oProperties.displaytext 	= "Layout";
+		oProperties.edittype 		= "GridLayout";
+		oProperties.defaultvalue 	= "";
+		oProperties.description 	= "Set the GridLayout.";
+		oProperties.userproperties  = {"headproperties" : []
+									 , "bodyproperties" : []
+									 , "summproperties" : []};
+
+			//===Define head properties===
+			let oProperty = {};
+			oProperty.id 			= "text";
+			oProperty.displaytext 	= "Text";
+			oProperty.edittype 		= "String";
+			oProperty.defaultvalue 	= "";
+			oProperty.description 	= "Enter the text to be expressed in this cell.";
+			oProperties.userproperties.headproperties.push(oProperty);
+
+			oProperty = {};
+			oProperty.id 			= "cssclass";
+			oProperty.displaytext 	= "CSS class";
+			oProperty.edittype 		= "String";
+			oProperty.defaultvalue 	= "";
+			oProperty.description 	= "Express the cell style as the class defined in XCSS.";
+			oProperties.userproperties.headproperties.push(oProperty);
+
+			//===Define body properties===
+			oProperty = {};
+			oProperty.id 			= "text";
+			oProperty.displaytext 	= "Text";
+			oProperty.edittype 		= "String";
+			oProperty.defaultvalue 	= "";
+			oProperty.description 	= "Enter the text to be expressed in this cell.";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+
+			//=====Remove when product changes in the future start
+			oProperty = {};
+			oProperty.id 			= "textAlign";
+			oProperty.displaytext 	= "Text align";
+			oProperty.edittype 		= "Enum";
+			oProperty.enumlist		= ["left","center","right"];		
+			oProperty.defaultvalue 	= "center";
+			oProperty.description 	= "field Text Align";
+			oProperties.userproperties.bodyproperties.push(oProperty);	
+			//=====Remove when product changes in the future end
+
+			oProperty = {};
+			oProperty.id 			= "displayExpr";
+			oProperty.displaytext 	= "Display expr";
+			oProperty.edittype 		= "String";
+			oProperty.defaultvalue 	= "";
+			oProperty.description 	= "Display Expr";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+
+			oProperty = {};
+			oProperty.id 			= "fieldExpr";
+			oProperty.displaytext 	= "Expr";
+			oProperty.edittype 		= "String";
+			oProperty.defaultvalue 	= "";
+			oProperty.description 	= "EXpr";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+			
+			oProperty = {};
+			oProperty.id 			= "suppress";
+			oProperty.displaytext 	= "Suppress";
+			oProperty.edittype 		= "Number";
+			oProperty.defaultvalue 	= "";
+			oProperty.description 	= "Set whether to display cells with the same value as one cell";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+
+			oProperty = {};
+			oProperty.id 			= "expandshow";
+			oProperty.displaytext 	= "Expand show";
+			oProperty.edittype 		= "Enum";
+			oProperty.enumlist		= ["show","hide"];			
+			oProperty.defaultvalue 	= "hide";
+			oProperty.description 	= "Show Expand Button";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+			
+			oProperty = {};
+			oProperty.id 			= "expandsize";
+			oProperty.displaytext 	= "Expand size";
+			oProperty.edittype 		= "String";
+			oProperty.defaultvalue 	= "16";
+			oProperty.description 	= "Expand Button Size";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+
+			oProperty = {};
+			oProperty.id 			= "wordWrap";
+			oProperty.displaytext 	= "Word wrap";
+			oProperty.edittype 		= "Enum";
+			oProperty.enumlist		= ["none","char","english"];			
+			oProperty.defaultvalue 	= "none";
+			oProperty.description 	= "wordWrap";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+			
+			oProperty = {};
+			oProperty.id 			= "tooltipText";
+			oProperty.displaytext 	= "Tooltip text";
+			oProperty.edittype 		= "String";
+			oProperty.defaultvalue 	= "";
+			oProperty.description 	= "tooltipText";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+			
+			oProperty = {};
+			oProperty.id 			= "maskeditformat";
+			oProperty.displaytext 	= "Maskedit format";
+			oProperty.edittype 		= "String";
+			oProperty.defaultvalue 	= "";
+			oProperty.description 	= "cell mask edit format";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+			
+			oProperty = {};
+			oProperty.id 			= "maskeditpostfixtext";
+			oProperty.displaytext 	= "Maskedit postfix text";
+			oProperty.edittype 		= "String";
+			oProperty.defaultvalue 	= "";
+			oProperty.description 	= "cell mask edit format";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+
+			oProperty = {};
+			oProperty.id 			= "cssclass";
+			oProperty.displaytext 	= "CSS class";
+			oProperty.edittype 		= "String";
+			oProperty.defaultvalue 	= "";
+			oProperty.description 	= "Express the cell style as the class defined in XCSS.";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+			
+			oProperty = {};
+			oProperty.id 			= "progressbarsmooth";
+			oProperty.displaytext 	= "Progressbar smooth";
+			oProperty.edittype 		= "Boolean";
+			oProperty.defaultvalue 	= "false";
+			oProperty.description 	= "Settings when cell displaytype is progressbar";
+			oProperties.userproperties.bodyproperties.push(oProperty);
+			
+		oViewAttr.attributes.push(oProperties);
+
+		// Grid autofittype settings
+		oProperties={};
+		oProperties.id 				= "autofittype";
+		oProperties.displaytext 	= "Autofit";
+		oProperties.edittype 		= "Enum";
+		oProperties.defaultvalue 	= this.AUTOFIT_TYPE;
+		oProperties.enumlist		= ["none", "col"];
+		oProperties.description 	= "Set auto columns width"
+		oViewAttr.attributes.push(oProperties);
+
+		// Filter search Edit settings
+		oProperties={};
+		oProperties.id 				= "UseFilterSearch";
+		oProperties.displaytext 	= "Use filter search";
+		oProperties.edittype 		= "Boolean";
+		oProperties.defaultvalue 	= this.USE_FILTER_SEARCH;
+		oProperties.description 	= "Display of filter Search";
+		oProperties.group		 	= "Filter";		
+		oViewAttr.attributes.push(oProperties);
+
+
+
+		oViewAttr["attributecount"] = oViewAttr.attributes.length;
+
+		sViewAttr = JSON.stringify(oViewAttr, null, "\t");	
+
+		return sViewAttr;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : set_fieldProperties
+	* Return       : user attribute list from model field(JSON format)
+	* Description  : Obtain a list of user attributes to register in model field
+	*---------------------------------------------------------------------------------------------*/
+	this.set_fieldProperties = function ()
+	{
+		let sFieldAttr = "";
+		let oFieldAttr = {"attributes": []};
+		let oProperties = {};
+		
+		oProperties={};
+		oProperties.id 				= "displaytype";
+		oProperties.displaytext 	= "Display type";
+		oProperties.edittype 		= "Enum";
+		oProperties.enumlist		= this.ARR_GRD_DISPLAY_TYPE;
+		oProperties.defaultvalue 	= this.DISPLAY_TYPE;
+		oProperties.description 	= "Set the Field Expression";
+		oFieldAttr.attributes.push(oProperties);
+
+		oProperties={};
+		oProperties.id 				= "edittype";
+		oProperties.displaytext 	= "Edit type";
+		oProperties.edittype 		= "Enum";
+		oProperties.enumlist		= this.ARR_GRD_EDIT_TYPE;
+		oProperties.defaultvalue 	= this.EDIT_TYPE;
+		oProperties.description 	= "Set the Field Editing Format";
+		oFieldAttr.attributes.push(oProperties);
+		
+		oFieldAttr["attributecount"] = oFieldAttr.attributes.length;
+		sFieldAttr = JSON.stringify(oFieldAttr, null, "\t");
+		return sFieldAttr;
+	}
+	
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : set_viewPropertiesValue
+	* Return       :
+	* Description  :
+	*---------------------------------------------------------------------------------------------*/
+	this.set_viewPropertiesValue = function ()
+	{
+
+		let sPropertiesValue = "";
+
+		if (this.oViewPropertiesValue) {
+			let oValues = this.oViewPropertiesValue;
+
+			sPropertiesValue = JSON.stringify(oValues, null, "\t");
+		}
+		return sPropertiesValue;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function    	: main
+	* Parameter   :
+	*               - fieldarray     : model field list
+	*               - contents       : old contents (include <View>)
+	*               - viewproperties : attributes for view generation
+	* Return      : View contents (source + script) (JSON format)
+	* Description : Generate the view based on the model field and return the results.
+	*---------------------------------------------------------------------------------------------*
+	*                        !!! This function is required by NexaLAP Studio. !!!                 *
+	*                        !!! Do not remove or rename this function. !!!                       *
+	*---------------------------------------------------------------------------------------------*/
+	this.main = function(fieldarray, contents, viewproperties)
+	{
+		//Return Value
+		let sResult = "";
+
+		// Set model information as JSON object
+		if(fieldarray) {
+			this.oFieldArray = JSON.parse(fieldarray);
+		}
+
+		// Set option configuration information as JSON object
+		if(contents) {
+			this.oContents = JSON.parse(contents);
+
+			// Initialize Model Information
+			this.oContents.View.Model = [];
+		}
+
+		// Set Option Setting Information as JSON Object
+		if(viewproperties) {
+			this.oViewProperties = JSON.parse(viewproperties);
+		}
+
+		// Call model information generation function
+		this.fn_GetModel();
+
+		// When binding is required for the selected field list, the viewdataset should be set.
+		this.oContents.View.attribute.viewdataset = "${VIEW_DATASET}";
+//		this.oContents.View.attribute.cssclass = "view_WF_boxTop";
+
+		// Call InitValue information generation function
+		this.oContents.View.InitValue = this.fn_GetInitValue();
+
+		// Call Object information generation function
+		this.oContents.View.Objects = this.fn_GetObjects();
+
+		// Call Script information generation function
+		this.oContents.View.Script = this.fn_GetScript();
+
+		// Initialize unnecessary component information
+		this.fnClearContents();
+				
+		// Convert view component information to String
+		sResult = JSON.stringify(this.oContents, null, "\t");
+//nexacro.trace(sResult);
+		return sResult;
+	};
+
+/************************************************************************************************
+ * Functions Related to the main() Execution Flow
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetModel
+	* Return       : model contents (JSON format)
+	* Description  : Function to generate a component source based on field information of the model entered by the user
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetModel = function() {
+		
+		let oLayout;
+
+		// Title creation processing
+		this.fn_makeTitle();
+	
+		this.fn_makeButton();
+
+		this.fn_makeFilter();
+
+		if(this.oViewProperties.attributes.gridlayout)
+		{
+			// Get Layout information when layout property is set
+			oLayout = this.lfn_StringToJson(this.oViewProperties.attributes.gridlayout);
+		} else {
+			// Create Layout information when layout property is not set
+			this.bNewLayout = true;
+			oLayout = this.fn_MakeLayout();
+			
+			let sLayout = JSON.stringify(oLayout);
+			this.oViewPropertiesValue = {"gridlayout" : JSON.parse(sLayout)};
+		}
+
+		this.fn_MakeGrid(oLayout);
+
+
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetInitValue
+	* Parameter    :
+	* Return       : initvalue contents (JSON format)
+	* Description  : Function to generate <InitValue> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetInitValue = function(){
+
+		let oInitValue = [];
+
+		return oInitValue;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetObjects
+	* Return       : objects contents (JSON format)
+	* Description  : Function to generate <Objects> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetObjects = function() {
+
+		//Initialize Object
+		let oObjects = [];
+
+		// InnerDataset information
+		let oInner = this.fn_GetInnerDataset(this.oFieldArray);
+
+		oObjects = oObjects.concat(oInner);
+
+		//Return Object Information
+		return oObjects;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetScript
+	* Return       : script contents (JSON format)
+	* Description  : Function to generate <Script> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetScript = function() {
+
+		//Initialize Script Information
+		let oScript = {};
+		let sValue = "this.cfn_FilterBtn_onclick = "
+                   + nexacro.replaceAll(nexacro.replaceAll(nexacro.replaceAll(this.cfn_FilterBtn_onclick.toString(),"\r",""),"\n",""),"\t","")
+                   + ";";	
+			sValue = sValue +"this._fnViewOnLoad = " 
+                   + nexacro.replaceAll(nexacro.replaceAll(nexacro.replaceAll(this._fnViewOnLoad.toString(),"\r",""),"\n",""),"\t","")
+                   + ";";		
+		oScript =
+		{
+			"tag": "Script",
+			"attribute": { "type" : "xscript5.1" },
+			"value": sValue
+		}
+		
+		return oScript;
+	};
+	
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fnClearContents
+	* Return       : 
+	* Description  : Function to contents clear
+	*---------------------------------------------------------------------------------------------*/
+	this.fnClearContents = function()
+	{
+		// Get original Layout information
+		let oLayout = this.oContents.View.View[0].Layouts[0].Layout;
+
+		// Get current Model information
+		let oModel = this.oContents.View.Model;
+		let oComp;
+		// If Layout exists
+		if(oLayout) {
+			for (let i = oLayout.length - 1; i >= 0; i--) {
+				if (oLayout[i].attribute && oLayout[i].attribute._fieldid) {
+					// Remove components previously created through ViewTemplate
+					oLayout.splice(i, 1);
+				} else {
+					// Remove user-added components from Layout and append to end of Model
+					oComp = oLayout.splice(i, 1);
+					oModel[oModel.length] = {
+						"fieldid" : "",
+						"Components" : oComp
+					}
+				}
+			}
+		}
+	};
+/*===============================================================================================*/
+/* Model Generation Related Functions                                                            */
+/*===============================================================================================*/
+	this._makeTitileFlag = false;
+	this.fn_makeTitle = function(){
+		let oModel = this.oContents.View.Model;		
+			oModel[oModel.length] = {"fieldid" : "TITLE","Components" : []};	
+
+		let bUseTitle = this.oViewProperties.attributes.useTitle;				
+		if(bUseTitle == "true"){
+			let sText = this.oViewProperties.attributes.titletext;			
+			// Create Title Static
+			let sCompId		= "sta_title";
+
+			let sCssClass	= "sta_WF_Title";
+
+			let oTitle = {};
+			oTitle.tag = "Static";
+			oTitle.attribute = {};
+			oTitle.attribute.id = sCompId;
+			oTitle.attribute.left = 0;
+			oTitle.attribute.top = 0;
+			oTitle.attribute.height = this.TITLE_HEIGHT;
+			oTitle.attribute.right = 0;			
+			oTitle.attribute.text = sText;
+			oTitle.attribute.cssclass = sCssClass;
+			oTitle.attribute._fieldid = "TITLE";
+			oTitle.attribute._fieldcomptype = "label";
+
+			oModel[oModel.length-1].Components.push(oTitle);
+
+			this._makeTitileFlag = true;
+		}
+	};
+
+	//Grid button Create
+	this._makeButtonFlag = false;
+	this._oLastButtonId = "";
+	this.fn_makeButton = function(){
+		let sButtons = this.oViewProperties.attributes.gridButton;
+		let oModel = this.oContents.View.Model;		
+			oModel[oModel.length] = {"fieldid" : "GridBtn","Components" : []};
+
+		let nWidth = 80;
+		let nTop = this.TITLE_HEIGHT - (this.COMP_HEIGHT + this.COMP_BOTTOM_PADING);  
+		if(nTop < 0){
+			nTop = 0;
+		}
+		let nRight = 0;
+		let nHeight = this.COMP_HEIGHT;
+
+		if(!this.lfn_IsNull(sButtons)){
+			let aGridButton = sButtons.split(",");
+			let sBtnText = "";
+			let oFilterBtn = {};
+			let sCssClass = "";
+			for(let i = aGridButton.length- 1 ; i >= 0  ; i--){
+				sBtnText = aGridButton[i];
+				
+				oFilterBtn = {};
+				oFilterBtn.tag = "Button";
+				oFilterBtn.attribute = {};
+				oFilterBtn.attribute.id = "btn_"+ sBtnText;
+				oFilterBtn.attribute.top = nTop; 				
+				oFilterBtn.attribute.width = nWidth;
+				oFilterBtn.attribute.right = nRight;
+				oFilterBtn.attribute.height = nHeight;
+				oFilterBtn.attribute.text = sBtnText;
+				switch(sBtnText){
+					case "Save":
+					case "save":
+					case "SAVE":
+						sCssClass = "btn_WF_Crud";
+						break;
+					default:
+						sCssClass = "btn_WF_GridBtn";
+						break;
+				}
+				oFilterBtn.attribute.cssclass = sCssClass;
+				oFilterBtn.attribute._fieldid = "_"+ sBtnText;
+				oFilterBtn.attribute._fieldcomptype = "filter";
+
+				oModel[oModel.length-1].Components.push(oFilterBtn);
+
+				nRight = "btn_"+ sBtnText + ":" + 5;
+
+				// Variable for searchFilter right position
+				this._oLastButtonId = "btn_"+ sBtnText;
+			}
+			this._makeButtonFlag = true;
+		}	
+	};
+
+	//searchFilter Edit Create
+	this._searchFilterFlag = false;
+	this.fn_makeFilter = function(){
+		let sFilterSearch = this.oViewProperties.attributes.UseFilterSearch;
+
+		let oModel = this.oContents.View.Model;		
+			oModel[oModel.length] = {"fieldid" : "FILTER","Components" : []};
+
+		if(sFilterSearch == "true"){
+			let nTop = this.TITLE_HEIGHT - (this.COMP_HEIGHT + this.COMP_BOTTOM_PADING);  
+			if(nTop < 0){
+				nTop = 0;
+			} 
+			let nHeight = this.COMP_HEIGHT;
+
+			let nRight = 0 ;
+			if(this._makeButtonFlag == true){
+				nRight = this._oLastButtonId + ":" + 5;
+			}
+
+			let oFilterSearch = {};
+			oFilterSearch.tag = "Edit";
+			oFilterSearch.attribute = {};
+			oFilterSearch.attribute.id = "edt_filterSearch";
+			oFilterSearch.attribute.top = nTop;
+			oFilterSearch.attribute.width = 240;
+			oFilterSearch.attribute.right = nRight;
+			oFilterSearch.attribute.height = nHeight;
+			oFilterSearch.attribute.text = "";
+			oFilterSearch.attribute.cssclass = "edt_WF_Search";
+			oFilterSearch.attribute._fieldid = "_filterSearch";
+			oFilterSearch.attribute._fieldcomptype = "comp";
+
+			oModel[oModel.length-1].Components.push(oFilterSearch);
+
+			this._searchFilterFlag = true;
+		}
+		
+		if(this._makeTitileFlag == true || this._makeButtonFlag == true || this._searchFilterFlag == true){
+			this.GRID_TOP_POSITION = this.TITLE_HEIGHT;
+		}
+	};
+
+
+	this.fn_MakeLayout = function()
+	{
+		let nFieldCnt = this.oFieldArray.fieldcount;
+		let oFields =  this.oFieldArray.fields;
+		let oField;
+
+		let oColumns = [];
+		let oColumn ={};
+
+		let oRows = [];		
+		let oRow ={};
+
+		let oHeads = [];	
+		let oHead ={};
+
+		let oBodys = [];	
+		let oBody ={};
+
+		for(let i = 0 ; i < nFieldCnt ; i++){
+			oField = oFields[i];
+			oColumn = {};
+			oColumn.band = "body";
+			oColumn.size = 100;
+			oColumns.push(oColumn);
+
+			oHead = {};
+			oHead.col = i;
+			oHead.row = 0;
+			oHead.text = oField.label;
+			oHeads.push(oHead);
+
+			oBody = {};
+			oBody.col = i;
+			oBody.row = 0;
+			oBody.field = oField.id;
+			oBodys.push(oBody);			
+		}
+		
+		oRow ={};
+		oRow.band = "head";
+		oRow.size = 32;
+		oRows.push(oRow);
+		oRow ={};
+		oRow.band = "body";
+		oRow.size = 32;
+		oRows.push(oRow);
+
+		let oLayout = {"columns": oColumns
+		              ,"rows"	: oRows
+					  ,"head"	: oHeads
+					  ,"body"	: oBodys
+					 }
+		return oLayout;
+	};
+
+	this.fn_MakeGrid = function(oLayout){
+
+		let oModel = this.oContents.View.Model;
+		let oGrid = {};
+
+		// Grid Autofittype settings
+		let sAutofittype = this.oViewProperties.attributes.autofittype;		
+
+		oGrid.tag = "Grid";
+		oGrid.attribute = {};
+		oGrid.attribute.id				= "grdList";
+		oGrid.attribute.left			= 0;
+		oGrid.attribute.top				= this.GRID_TOP_POSITION;
+		oGrid.attribute.right			= 0;
+		oGrid.attribute.bottom			= 0;
+		oGrid.attribute.binddataset	= "${VIEW_DATASET}";
+		oGrid.attribute.autofittype = sAutofittype;
+		oGrid.attribute.cssclass = "grd_WF_Detail";
+		oGrid.attribute._fieldid = "grdList";
+		oGrid.attribute._fieldcomptype = "comp";		
+		oGrid.Grid = [];
+			let oFormats = {};
+			oFormats.tag = "Formats";
+			oFormats.attribute = {};
+			oFormats.Formats = [];
+				let oFormat ={};
+				oFormat.tag = "Format";
+				oFormat.attribute = {"id" : "default"};
+				oFormat.Format = [];
+					let oColumns = {};
+					oColumns.tag = "Columns";
+					oColumns.attribute = {};
+					oColumns.Columns = this.fn_GetColumns(oLayout);
+				oFormat.Format.push(oColumns);
+				
+					let oRows = {};
+					oRows.tag = "Rows";
+					oRows.attribute = {};
+					oRows.Rows = this.fn_GetRows(oLayout);
+				oFormat.Format.push(oRows);
+				
+					let oHead = {};
+					oHead.tag = "Band";
+					oHead.attribute = { "id" : "head"};
+					oHead.Band = this.fn_GetHeads(oLayout);
+				oFormat.Format.push(oHead);
+				
+					let oBody = {};
+					oBody.tag = "Band";
+					oBody.attribute = { "id" : "body"};
+					oBody.Band = this.fn_GetBodys(oLayout);
+				oFormat.Format.push(oBody);
+			
+			if(!this.lfn_IsNull(oLayout.summary)){
+					let oSummary = {};
+					oSummary.tag = "Band";
+					oSummary.attribute = { "id" : "summary"};
+					oSummary.Band = this.fn_GetSumms(oLayout);
+				oFormat.Format.push(oSummary);
+			}	
+			oFormats.Formats.push(oFormat);
+			
+		oGrid.Grid.push(oFormats);
+
+		oGrid = this.fnMergeField(oGrid);
+		
+		//Create Model Field ID List to use in Grid
+		let sFieldId;
+		for(i=0;i<this.oFieldArray.fields.length;i++){
+			oField = this.oFieldArray.fields[i];
+			if (sFieldId == undefined){
+				sFieldId = oField.id;
+			} else {
+				sFieldId += "," + oField.id;
+			}
+		}
+		oModel[oModel.length] = { "fieldid" : sFieldId, "Components" : [oGrid]};
+	};
+
+/*---------------------------------------------------------------------------------------------*
+	 * Function     : fn_GetColumns
+	 * Parameter    :
+	 *                - oLayout : layout data
+	 * Return       : column(s) data of grid format
+	 * Description  : Function to generate <Column> source
+	 *---------------------------------------------------------------------------------------------*/
+	this.fn_GetColumns = function(oLayout){
+		let oColumns = [];
+		let oColumn={};
+		let nCount = oLayout.columns.length;
+		for(let i=0;i<nCount;i++) {
+			oColumn = {};
+			oColumn.tag = "Column";
+			oColumn.attribute = {};
+			oColumn.attribute.size = oLayout.columns[i].size;
+			oColumn.attribute.band = oLayout.columns[i].band;
+			oColumns.push(oColumn);
+		}
+
+		//Return Column Information
+		return oColumns;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	 * Function     : fn_GetRows
+	 * Parameter    :
+	 *                - oLayout : layout data
+	 * Return       : row(s) data of grid format
+	 * Description  : Function to generate <Row> source
+	 *---------------------------------------------------------------------------------------------*/
+	this.fn_GetRows = function(oLayout) {
+		let oRows = [];
+		let oRow={};
+		let nCount = oLayout.rows.length;
+		for(let i=0;i<nCount;i++) {
+			oRow = {};
+			oRow.tag = "Row";
+			oRow.attribute = {};
+			oRow.attribute.size = oLayout.rows[i].size;
+			oRow.attribute.band = oLayout.rows[i].band;
+			oRows.push(oRow);
+		}
+		//Return Raw Information
+		return oRows;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	 * Function     : fn_GetHeads
+	 * Parameter    :
+	 *                - oLayout : layout data
+	 * Return       : head band data of grid format
+	 * Description  : Function to generate <Band id="head"> source
+	 *---------------------------------------------------------------------------------------------*/
+	this.fn_GetHeads = function(oLayout){
+
+		let oHeads = [];
+		let oCell = {};
+		let oCellInfo = [];
+		let oLayoutHead;
+		let sFieldId;
+		let nCount = oLayout.head.length;
+		//Add Cell Tag on Head Band based on number of Fields
+		for(let i=0;i<nCount;i++) {
+			oLayoutHead = oLayout.head[i];
+			
+			oCell = {};
+			oCell.tag = "Cell";
+			oCell.attribute = {};
+			oCell.attribute.id = "cell_head_"+oLayoutHead.col+"_"+oLayoutHead.row+"_"+oLayoutHead.text;
+			
+			for(let key in oLayoutHead){
+				if(key == "halign"){
+					oCell.attribute["textAlign"] = oLayoutHead[key];
+				} else if(key == "valign"){
+					oCell.attribute["verticalAlign"] = oLayoutHead[key];
+				} else {
+					oCell.attribute[key] = oLayoutHead[key];
+				}
+			}
+			// Add Cell tag to Head Band
+			oHeads[oHeads.length] = oCell;
+		}
+		return oHeads;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	 * Function     : fn_GetBodys
+	 * Parameter    :
+	 *                - oBaseLayout : base layout data
+					  - oBodyLayout : body layout data
+	 * Return       : body band data of grid format
+	 * Description  : Function to generate <Band id="body"> source
+	 *---------------------------------------------------------------------------------------------*/
+	this.fn_GetBodys = function(oLayout){
+		let oBodys = [];
+		let oCell;
+		let oLayoutBody;
+		let nCount = oLayout.body.length;
+
+		let oField;
+		let sFieldId = "";
+
+		let	sDisplayType;
+		let sEditType;
+		for(let i=0;i<nCount;i++){
+			oLayoutBody = oLayout.body[i];
+
+			oCell = {};
+			oCell.tag = "Cell";
+			oCell.attribute = {};
+			oCell.attribute.id = "cell_body_"+oLayoutBody.col+"_"+oLayoutBody.row+"_"+oLayoutBody.field;
+			for(let key in oLayoutBody){
+				if(key == "field"){
+					oCell.attribute["text"] = "bind:"+oLayoutBody[key];
+				} else if(key == "halign"){
+					oCell.attribute["textAlign"] = oLayoutBody[key];
+				} else if(key == "valign"){
+					oCell.attribute["verticalAlign"] = oLayoutBody[key];
+				} else if(key == "cssclass"){
+					if(oLayoutBody[key].indexOf("?")>=0){
+						oCell.attribute["cssclass"] = "expr:"+oLayoutBody[key];
+					} else {
+						oCell.attribute["cssclass"] = oLayoutBody[key];					
+					}
+				} else {
+					oCell.attribute[key] = oLayoutBody[key];
+				}
+			}
+
+			// Apply field properties
+			sFieldId = oLayoutBody["field"];
+			oField = this.oFieldArray.fields.filter(fields=>fields.id==sFieldId)[0];
+			if(!this.lfn_IsNull(oField)){
+				sDisplayType = oField.displaytype;
+				sEditType = oField.edittype;
+				if(!this.lfn_IsNull(sDisplayType)){
+					if(sDisplayType == "auto"){
+						let sFieldtype = oField.fieldtype;
+						switch(sFieldtype){
+							case "Boolean" :
+								sDisplayType =  "checkboxcontrol";
+								break;
+							case "Date":
+								sDisplayType =  "calendarcontrol";
+								break;
+							case "Image":
+								sDisplayType =  "imagecontrol";
+								break;
+							case "Select":
+								sDisplayType =  "combotext";
+								break;
+							case "MultiSelect":
+								sDisplayType =  "multicombocontrol";
+								break;
+							case "Progressbar":
+								sDisplayType =  "progressbarcontrol";
+								break;																																
+							case "Email":
+							case "Phone":
+								sDisplayType =  "mask";
+								break;
+							case "Number":
+							case "Price":
+								sDisplayType =  "number";
+								break;
+							case "Label":
+							case "Text":
+							case "Longtext":
+							case "Multilinetext":
+							case "Password":
+							case "TextSearchable":
+								sDisplayType =  "normal";
+								break;
+
+						}
+					}
+					oCell.attribute["displaytype"] = sDisplayType;
+				}
+				if(!this.lfn_IsNull(sEditType)){
+					oCell.attribute["edittype"] = sEditType;
+				}
+			}
+
+			// Set default Cell properties
+			let oCellProp = this.lfn_GetCellProp("body",sDisplayType,sEditType,oField);
+			if (!this.lfn_IsNull(oCellProp)){
+				Object.assign(oCell.attribute, oCellProp);
+			}
+
+			if (!this.oFieldCellInfo.hasOwnProperty(sFieldId)) {
+				this.oFieldCellInfo[sFieldId] = {"head":[],"body":[],"summ":[]};
+			}
+			oCellInfo = this.oFieldCellInfo[sFieldId]["body"];
+			oCellInfo.push({"id": oCell.attribute.id, "col": oLayoutBody.col, "row": oLayoutBody.row});
+
+			// Add Cell tag to Body Band
+			oBodys[oBodys.length] = oCell;		
+		}		
+		return oBodys;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetSums
+	* Parameter    :
+	*                - oBaseLayout : base layout data
+	 			     - oSummLayout : Summ layout data
+	* Return       : summ band data of grid format
+	* Description  : Function to generate <Band id="summ"> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetSumms = function(oLayout)
+	{
+		let oSummary = [];
+		let oCell;
+		let oLayoutSummary;
+		let nCount = oLayout.summary.length;
+		for(let i=0;i<nCount;i++){
+			oLayoutSummary = oLayout.summary[i];
+
+			oCell = {};
+			oCell.tag = "Cell";
+			oCell.attribute = {};
+			oCell.attribute.id = "cell_summary_"+oLayoutSummary.col+"_"+oLayoutSummary.row;
+			for(let key in oLayoutSummary){
+				oCell.attribute[key] = oLayoutSummary[key];
+			}
+
+			// if (!this.oFieldCellInfo.hasOwnProperty(oLayoutHead.text)) {
+			// 	this.oFieldCellInfo[oLayoutHead.text] = {"head":[],"body":[],"summ":[]};
+			// }
+			// oCellInfo = this.oFieldCellInfo[oLayoutHead.text]["summ"];
+			// oCellInfo.push({"id": oCell.attribute.id, "col": oLayoutHead.col, "row": oLayoutHead.row});
+
+			// Add Cell tag to Body Band
+			oSummary[oSummary.length] = oCell;		
+		}
+		return oSummary;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetInnerDataset
+	* Parameter    : oFieldArray : model field data
+	* Return       : Returns InnerDataset object Json Array
+	* Description  : Function to generate dataset object Json based on values set in model Field options property
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetInnerDataset = function(objFieldArr)	{
+
+		let oModels = this.oContents.View.Model;
+		let oInnerDatasets = [];
+
+		// Get model Field count
+		let nCount = objFieldArr.fieldcount;
+		let nRowCount = 0;
+
+		let oField;
+		let sFieldId;
+		let sFieldType;
+		let sCodeField;
+		let sNameField;
+		let sOptionsInfo
+		let oOptionsInfo;
+		let sInnerDSList;
+		let oRowInfo;
+		let sInnerDatasetId;
+		let oInnerDataset;
+		let arrInnerDSColumn;
+		let arrInnerDSColumns
+		let oInnerField;
+
+		let oFieldModel;
+		let oFieldComps;
+		let oFieldComp;
+		let sCompTag;
+
+		// Create column information for each model Field
+		for(let i=0;i<nCount;i++) {
+			oField = objFieldArr.fields[i];
+			sFieldId 	= oField["id"];
+			sFieldType	= oField["fieldtype"];
+			sDataType 	= oField["datatype"];
+
+			sOptionsInfo 	= oField[this.FIELD_OPTIONS];
+			if (typeof sOptionsInfo === "object") {
+				sOptionsInfo = JSON.stringify(sOptionsInfo, null);
+			}
+
+			sInnerDatasetId = "";
+
+			// Select / MultiSelect related Field
+			sCodeField = "";
+			sNameField = "";
+
+			// Date / DateTime related Field
+			sBackgroundField = "";
+			sBorderField = "";
+			sDateField = "";
+			sTextColorField = "";
+
+			nRowCount = 0;
+
+			if (this.lfn_IsNotNull(sOptionsInfo)) {
+				if (sFieldType == "Select" || sFieldType == "MultiSelect") {
+					sInnerDatasetId = this.fn_GetCompId("innerdataset" + "_" + sFieldId);
+
+					if (typeof sOptionsInfo === "string") {
+
+						sOptionsInfo = sOptionsInfo.replace(/\n/g, '');
+						oOptionsInfo = this.lfn_StringToJson(sOptionsInfo);
+					} else {
+						oOptionsInfo = sOptionsInfo;
+					}
+
+					sInnerDSList = oOptionsInfo["innerdataset_list"];
+
+					// select type. 'manual' option.
+					if (sInnerDSList && Object.keys(sInnerDSList).length > 0) // If innerdataset information exists,
+					{
+						let arrInnerDSLabelList = sInnerDSList.map(option => option.label);
+						let arrInnerDSValueList = sInnerDSList.map(option => option.value);
+
+						arrInnerDSColumns = new Array();
+
+						sCodeField = "code";
+						sNameField = "data";
+
+						// 1) Create InnerDataset
+						// Create InnerDataset column information
+						for(let j=0; j<2; j++)
+						{
+							oInnerField = {
+								"id" : j==0 ? "code" : "data"
+								, "datatype" : "STRING"
+								, "datasize" : "256"
+							};
+							arrInnerDSColumns.push(oInnerField);
+						}
+
+						arrInnerDSColumn = {"fieldcount" : 2, "fields" : arrInnerDSColumns}
+						nRowCount = arrInnerDSLabelList.length;
+
+						oRowInfo = new Array();
+						for (let k=0; k<nRowCount; k++)
+						{
+							oRowInfo.push({"code":arrInnerDSValueList[k], "data":arrInnerDSLabelList[k]});
+						}
+
+						// Create InnerDataset object information
+						oInnerDataset = this.lfn_GetDataset(sInnerDatasetId, arrInnerDSColumn, nRowCount, oRowInfo);
+
+						// Add to InnerDataset return information
+						oInnerDatasets.push(oInnerDataset);
+
+						// 2) Set InnerDataset on component
+						// Find model information corresponding to fieldid
+						//oFieldModel = oModels.find(oModel => String("," + oModel.fieldid + ",").indexOf("," + sFieldId + ",") >= 0);
+						for(let i=0;i<oModels.length;i++) {
+							let oModel = oModels[i];
+							for(let j=0;j<oModel.Components.length;j++) {
+								
+								if (oModel.Components[j].tag == "Grid" || oModel.Components[j].tag == "ListView") {
+									oFieldComp = oModel.Components[j];
+								}
+								else {
+									let sCompFieldId = oModel.Components[j].attribute._fieldid;
+									let sCompFieldType = oModel.Components[j].attribute._fieldcomptype;
+									if(sCompFieldId==sFieldId&&sCompFieldType=="comp") {
+										oFieldComp = oModel.Components[j];
+									}
+								}
+							}
+						}
+
+						// Set InnerDataset related properties on component according to model corresponding to fieldid
+						if (oFieldComp)	{
+							sCompTag = oFieldComp["tag"];
+							if (sCompTag == "Grid") {
+								this.lfn_SetCellInnerDataset(oFieldComp, "body", this.oFieldCellInfo, sFieldId, sInnerDatasetId, sCodeField, sNameField);
+							}
+						}
+					}
+				} else if (sFieldType == "Date" || sFieldType == "DateTime") {
+					sInnerDatasetId = this.fn_GetCompId("innerdataset" + "_" + sFieldId);
+					sOptionsInfo = sOptionsInfo.replace(/\n/g, '');
+					oOptionsInfo = this.lfn_StringToJson(sOptionsInfo);
+
+					sInnerDSList = oOptionsInfo["innerdataset_list"];
+
+					if (sInnerDSList && Object.keys(sInnerDSList).length > 0) // If innerdataset information exists,
+					{
+						let arrInnerDSBackgroundList = sInnerDSList.map(option => option.background);
+						let arrInnerDSBorderList = sInnerDSList.map(option => option.border);
+						let arrInnerDSDateList = sInnerDSList.map(option => option.date);
+						let arrInnerDSTextColorList = sInnerDSList.map(option => option.textColor);
+
+						arrInnerDSColumns = new Array();
+
+						sBackgroundField = "backgroundcolumn";
+						sBorderField = "bordercolumn";
+						sDateField = "datecolumn";
+						sTextColorField = "textcolorcolumn";
+
+						// 1) Create InnerDataset
+						// Create InnerDataset column information
+						var arrInnerDSColumnList = [sBackgroundField, sBorderField, sDateField, sTextColorField];
+						for(let j=0; j<arrInnerDSColumnList.length; j++)
+						{
+							oInnerField = {
+								"id" : arrInnerDSColumnList[j]
+								, "datatype" : "STRING"
+								, "datasize" : "256"
+							};
+							arrInnerDSColumns.push(oInnerField);
+						}
+
+						arrInnerDSColumn = {"fieldcount" : 4, "fields" : arrInnerDSColumns}
+						nRowCount = sInnerDSList.length;
+
+						oRowInfo = new Array();
+						for (let k=0; k<nRowCount; k++)
+						{
+							oRowInfo.push({"backgroundcolumn":arrInnerDSBackgroundList[k]
+							             , "bordercolumn":arrInnerDSBorderList[k]
+										 , "datecolumn":arrInnerDSDateList[k]
+										 , "textcolorcolumn":arrInnerDSTextColorList[k]});
+						}
+
+						// Create InnerDataset object information
+						oInnerDataset = this.lfn_GetDataset(sInnerDatasetId, arrInnerDSColumn, nRowCount, oRowInfo);
+
+						// Add to InnerDataset return information
+						oInnerDatasets.push(oInnerDataset);
+
+						// 2) Set InnerDataset on component
+						// Find model information corresponding to fieldid
+						oFieldModel = oModels.find(oModel => String("," + oModel.fieldid + ",").indexOf("," + sFieldId + ",") >= 0);
+
+						// Set InnerDataset related properties on component according to model corresponding to fieldid
+						if (oFieldModel){
+							oFieldComps = oFieldModel["Components"];
+							for(k=0;k<oFieldComps.length;k++){
+								oFieldComp = oFieldComps[k];
+								sCompTag = oFieldComp["tag"];
+								if (sCompTag == "Grid") {
+									this.lfn_SetCellInnerDataset(oFieldComp, "body", this.oFieldCellInfo, sFieldId, sInnerDatasetId, sCodeField, sNameField, sBackgroundField, sBorderField, sDateField, sTextColorField);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return oInnerDatasets;
+	};
+	
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fnMergeField
+	* Parameter    : oComp : Current component information
+	* Return       : oComp : Updated component information
+	* Description  : Function to apply information defined in oContents to the component to be updated
+	*---------------------------------------------------------------------------------------------*/
+	this.fnMergeField = function(oComp)
+	{
+		// Do not merge when Layout was newly created
+		if(this.bNewLayout==true) return oComp;
+      
+		// Get original Layout information
+		let oLayout = this.oContents.View.View[0].Layouts[0].Layout;
+		// If Layout exists
+		if(oLayout){
+			let objPropsOrg;
+			let objProps;
+
+			// Current component Field Id
+			let sFieldId = oComp.attribute._fieldid;
+
+			// Current component Field Comp Type (comp, label, bg, etc.)
+			let sFieldCompType = oComp.attribute._fieldcomptype;
+
+			// Find whether current component information exists in Layout information
+			let nIdx = oLayout.findIndex(item => item.attribute._fieldid === sFieldId&&item.attribute._fieldcomptype === sFieldCompType);
+
+			// If information exists
+			if(nIdx>-1)
+			{
+				// Get current component property information
+				objProps = oComp.attribute;
+
+				// Get component properties set in Layout
+				oFieldOrg = oLayout.splice(nIdx, 1)[0];
+				objPropsOrg = oFieldOrg.attribute;
+
+				// Do not merge existing properties when component type has changed
+				if(oComp.tag!=oFieldOrg.tag){
+					return oComp;
+				}
+
+				// Exclude position-related properties
+				let arrExcludeKeys = ["top", "left", "width", "height", "right", "bottom"];
+
+				// Add values from Layout to Model
+				Object.keys(objPropsOrg).forEach(
+               		key => {
+								if (arrExcludeKeys.includes(key)){
+									return;
+								}
+
+								if(this.lfn_IsNull(objPropsOrg[key])==true){
+									return;
+								}
+
+								if(this.lfn_IsNull(objProps[key])==false){
+									return;
+								}
+
+								objProps[key] = objPropsOrg[key];
+                  			}
+				);
+			}
+		}
+		return oComp;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetCompId
+	* Parameter    :
+					- sCompId : Component ID to create
+	* Return       : sRtnCompId : Component ID
+	* Description  : Component ID generation function
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetCompId = function(sCompId)
+	{
+
+		let sNewCompId = "";
+		if (this.COMP_NAMING_RULE == "C") {
+			sNewCompId = this.lfn_ToCamelCase(sCompId);
+		} else if (this.COMP_NAMING_RULE == "S") {
+			sNewCompId = this.lfn_ToSnakeCase(sCompId);
+		} else if (this.COMP_NAMING_RULE == "LS") {
+			sNewCompId = this.lfn_ToLowerSnakeCase(sCompId);
+		} else {
+			sNewCompId = sCompId;
+		}
+
+		// Check whether a component created with the same Field exists
+		let arrTemp = this.arrCompIds.filter(arrCompIds=>arrCompIds.indexOf(sNewCompId)==0);
+		let sRtnCompId;
+
+		// If a component created with the same Field exists
+		if(arrTemp.length>0){
+			sRtnCompId = sNewCompId+"_"+arrTemp.length;
+		} else {
+			// If no component created with the same Field exists
+			sRtnCompId = sNewCompId;
+		}
+
+		// Add to component ID management Array
+		this.arrCompIds[this.arrCompIds.length] = sRtnCompId;
+
+		// Return component ID
+		return sRtnCompId;
+	}
+/*===============================================================================================*/
+/* List of functions defined inside the script generated by fn_GetScript
+/*-----------------------------------------------------------------------------------------------*/
+/* Notes: 1. Do not include comments inside these functions.                                      */
+/*        2. Escape characters such as '\r, \n, \t' must not be used.                          */
+/*===============================================================================================*/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : _fnViewOnLoad
+	* Description  : Handles the onload event processing for the view component
+	*---------------------------------------------------------------------------------------------*/
+	this._fnViewOnLoad = function(objForm){
+		/* Sets the view form reference so that functions declared in the view can access it */
+		this._ownerForm = objForm;
+		this._sSearchFilterValue = "";
+		this._sFilterValue = "";
+		let aComponents = this.components;
+		let oComp = null;	
+		for(let i = 0 ; i < aComponents.length ; i++){
+			oComp = aComponents[i];
+			if(oComp instanceof nexacro.Button){
+				if(oComp._fieldcomptype == "filter"){
+					oComp.addEventHandler("onclick",this.cfn_FilterBtn_onclick, this)
+				}
+			}
+		}
+	};
+
+	this.cfn_FilterBtn_onclick = function(obj, e){
+		let aComponents = this.components;
+		for(let i = 0 ; i < aComponents.length ; i++){
+			if(aComponents[i]._fieldcomptype == "filter"){
+				aComponents[i].setSelectStatus(false);
+			}
+		}
+		obj.setSelectStatus(true);
+	};]]>
+  </Script>
+  <TestData>
+    <TestFields><![CDATA[{
+    "fields": [
+        {
+            "id": "field1",
+            "label": "Field1",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Boolean",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "truevalue": "Y",
+                "falsevalue": "N"
+            }
+        },
+        {
+            "id": "field2",
+            "label": "Field2",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Date",
+            "datatype": "DATE",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "dataformat": "yyyy-MM-dd"
+            }
+        },
+        {
+            "id": "field3",
+            "label": "Field3",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Time",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field4",
+            "label": "Field4",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "DateTime",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field5",
+            "label": "Field5",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "FromToDate",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field6",
+            "label": "Field6",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Email",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field7",
+            "label": "Field7",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Image",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field8",
+            "label": "Field8",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Label",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field9",
+            "label": "Field9",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Text",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field10",
+            "label": "Field10",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "LongText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field11",
+            "label": "Field11",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiLineText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field12",
+            "label": "Field12",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Password",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field13",
+            "label": "Field13",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Number",
+            "datatype": "INT",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field14",
+            "label": "Field14",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Phone",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field15",
+            "label": "Field15",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Price",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field16",
+            "label": "Field16",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Select",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "innerdataset_list": [
+                    {
+                        "label": "TOBESOFT",
+                        "value": "01"
+                    },
+                    {
+                        "label": "A Company",
+                        "value": "02"
+                    },
+                    {
+                        "label": "B Company",
+                        "value": "03"
+                    },
+                    {
+                        "label": "C Company",
+                        "value": "04"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "field17",
+            "label": "Field17",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiSelect",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field18",
+            "label": "Field18",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "ProgressBar",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        }
+    ]
+}]]>
+    </TestFields>
+    <TestViewProperties><![CDATA[{
+    "attributes": {
+		"titleuse": "true",
+        "titletext": "This is title",
+        "fieldwidth": "250",
+        "labelwidth": "100"
+    }
+}]]>
+    </TestViewProperties>
+  </TestData>
+</ViewTemplateInfo>

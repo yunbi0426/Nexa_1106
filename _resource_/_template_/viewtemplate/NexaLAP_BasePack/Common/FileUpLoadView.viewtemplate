@@ -1,0 +1,1462 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ViewTemplateInfo version="2.0">
+  <ViewTemplate id="FileUpLoadView" viewtype="Others" description_en="description of the view template"/>
+  <Script version="1.0" type="xscript5.1"><![CDATA[/************************************************************************************************
+*  @FileName 	FileUpLoadView
+*  @Creator 	Tobesoft
+*  @CreateDate 	2026.01.02
+*  @Desction    
+*  @Version		1.0.0.0
+*************************************************************************************************
+*  Revision History
+*************************************************************************************************
+*  Date          		Modifier                Description
+*************************************************************************************************
+*  YYYY.MM.DD     		Author       	        Initial creation
+************************************************************************************************/
+/************************************************************************************************
+ * Include Declarations
+ ************************************************************************************************/
+  	include "../_lib_/util.xjs";
+	include "../_lib_/common.xjs";
+/************************************************************************************************
+ * Variable Definitions
+ ************************************************************************************************/
+	//-------------------------------------------------------------------------------------------
+	// View-related constants
+	//-------------------------------------------------------------------------------------------
+	//Grid cell size
+	this.COL_SIZE				= 80;
+	this.HEAD_BAND_SIZE			= 30;
+	this.BODY_BAND_SIZE			= 30;
+	// Default layout configuration
+	this.VIEW_PADDING = 10;		// Default padding for the view
+
+	this.COMPONENT_TOP = 5;		// Default top position for components
+	this.COMPONENT_LEFT = 5;	// Default left position for components
+	this.COMPONENT_RIGHT = 5;	// Default right position for components
+	this.COMPONENT_WIDTH = 100;	// Default width of components
+	this.COMPONENT_HEIGHT = 32;	// Default height of components
+
+	this.TOP_POSITION = this.VIEW_PADDING;
+	this.LEFT_POSITION = this.VIEW_PADDING;
+	this.RIGHT_POSITION = this.VIEW_PADDING;
+	this.BOTTOM_POSITION = this.VIEW_PADDING;
+
+	this.DISPLAY_TYPE			= "auto";
+	this.EDIT_TYPE				= "auto";
+
+	//-------------------------------------------------------------------------------------------
+	// View-related variables
+	//-------------------------------------------------------------------------------------------
+	// List of model fields
+	this.oFieldArray;
+
+	// Existing contents (including <View> element)
+	this.oContents;
+
+	// Properties for view
+	this.oViewProperties;
+/************************************************************************************************
+ * Required Function Area for NexaLAP Studio
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     	: set_viewProperties
+	* Return       	: List of view generation attributes (JSON format)
+	* Description 	: Defines the attributes applied to the overall view during view generation.
+	*---------------------------------------------------------------------------------------------*/
+	this.set_viewProperties = function() {
+		var sViewAttr = "";
+
+		var oViewAttr = {
+							"attributes": [
+								{
+									"id": "headbandsize",
+									"displaytext": "Head height(px)",
+									"edittype": "Number",
+									"defaultvalue": this.HEAD_BAND_SIZE,
+									"description": "Set the head band height",
+									"group": "Band"
+								},
+								{
+									"id": "bodybandsize",
+									"displaytext": "Body height(px)",
+									"edittype": "Number",
+									"defaultvalue": this.BODY_BAND_SIZE,
+									"description": "Set the body band height",
+									"group": "Band"
+								}
+							]
+						};
+
+		sViewAttr = JSON.stringify(oViewAttr, null, "\t");
+		// nexacro.trace(">> sViewAttr : " + sViewAttr);
+
+		return sViewAttr;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : set_fieldProperties
+	* Return       : List of field-level attributes for view generation (JSON format)
+	* Description  : Defines the attributes applied to each model field during view generation.
+	*---------------------------------------------------------------------------------------------*/
+	this.set_fieldProperties = function() {
+		var sFieldAttr = "";
+
+		var oFieldAttr = {
+							"attributes": [
+								{
+									"id"			: "displaytype",
+									"displaytext"	: "Display type",
+									"edittype"		: "Enum",
+									"enumlist" 		: this.ARR_GRD_DISPLAY_TYPE,
+									"defaultvalue"	: this.DISPLAY_TYPE,
+									"description"	: "Set the Field Expression"
+								},
+								{
+									"id": "edittype",
+									"displaytext": "Edit type",
+									"edittype" : "Enum",
+									"enumlist" : this.ARR_GRD_EDIT_TYPE,
+									"defaultvalue" : this.EDIT_TYPE,
+									"description" : "Set the Field Editing Format"
+								},
+								{
+									"id": "fieldwidth",
+									"displaytext": "Width",
+									"edittype": "Number",
+									"defaultvalue": this.COL_SIZE,
+									"description": "Field Width(px)"
+								},
+								{
+									"id"			: "fieldTextAlign"
+									,"displaytext"	: "TextAlign"
+									,"edittype"		: "Enum"
+									,"enumlist"		: ["left","center","right"]
+									,"defaultvalue"	: "left"
+									,"description"	: "field Text Align"
+								}
+							]
+						};
+
+		sFieldAttr = JSON.stringify(oFieldAttr, null, "\t");
+		// nexacro.trace(">> sFieldAttr : " + sFieldAttr);
+
+		return sFieldAttr;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	 * Function    	: main
+	 * Parameters  	:
+	 * 				 - fieldarray     : List of model fields
+	 *  			 - contents       : Existing contents (including <View> element)
+	 *  			 - viewproperties : Attributes for view generation
+	 * Return      	: View definition (source + script) in JSON format
+	 * Description	: Generates the view based on the model fields and returns the result.
+	 *---------------------------------------------------------------------------------------------*
+	 *                        !!! This function is required by NexaLAP Studio. !!!                 *
+	 *                        !!! Do not remove or rename this function. !!!                       *
+	 *---------------------------------------------------------------------------------------------*/
+	this.main = function(fieldarray, contents, viewproperties) {
+		var sResult = "";
+
+		// Convert the data into a JSON object
+		if(fieldarray) {
+			this.oFieldArray = JSON.parse(fieldarray);
+		}
+		// Set View Component Information as JSON Object
+		if(contents) {
+			this.oContents = JSON.parse(contents);
+
+			// Initialize Model Information
+			this.oContents.View.Model = [];
+
+			// Initialize View layout
+			this.oContents.View.View[0].tag = "Layouts";
+			this.oContents.View.View[0].Layouts = [];
+		}
+
+		// Set Option Setting Information as JSON Object
+		if(viewproperties) {
+			this.oViewProperties = JSON.parse(viewproperties);
+		}
+
+		// Generate model information
+		this.oContents.View.Model = this.fn_GetModel();
+
+		// When binding is required for the selected field list, the viewdataset must be set.
+		this.oContents.View.attribute.viewdataset = "${VIEW_DATASET}";
+
+		// Generate object information
+		this.oContents.View.Objects = this.fn_GetObjects();
+
+		// Generate script information
+		this.oContents.View.Script = this.fn_GetScript();
+
+		// Convert the view definition to a JSON string
+		sResult = JSON.stringify(this.oContents, null, "\t");
+		// nexacro.trace(">> sResult : " + sResult);
+
+		return sResult;
+	};
+
+/************************************************************************************************
+ * Functions Related to the main() Execution Flow
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetModel
+	* Return       : model contents (JSON format)
+	* Description  : Function to generate a component source based on field information of the model entered by the user
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetModel = function() {
+
+		var oModel = [];
+
+		// Generate button
+		this.fn_makeButton(oModel);
+
+		// Generate Grid
+		this.fn_makeGridContent(oModel);
+
+		// Return the model information to be generated
+		return oModel;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetObjects
+	* Return       : objects contents (JSON format)
+	* Description  : Function to generate <Objects> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetObjects = function() {
+
+		//Initialize Object
+		var oObjects = [];
+
+		// Generate fileDialog
+		this.fn_makeFileDialog(oObjects);
+
+		return oObjects;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetScript
+	* Return       : script contents (JSON format)
+	* Description  : Function to generate <Script> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetScript = function() {
+
+		//Initialize Script Information
+		var oScript = {};
+		var sValue = this.lfn_FunctionString(this._fnViewOnLoad);
+		sValue += this.lfn_FunctionString(this.fn_btn_AddFile_click);
+		sValue += this.lfn_FunctionString(this.fn_fileDialog_onclose);
+		sValue += this.lfn_FunctionString(this.fn_file_onsuccess);
+		sValue += this.lfn_FunctionString(this.fn_file_onerror);
+		sValue += this.lfn_FunctionString(this.fn_cutFileSize);
+		sValue += this.lfn_FunctionString(this.fn_grdList_ondrop);
+		sValue += this.lfn_FunctionString(this.vfn_fileAdd);
+		sValue += this.lfn_FunctionString(this.fn_btn_DelFile_click);
+		sValue += this.lfn_FunctionString(this.fn_fileDs_onColumnchanged);
+
+		oScript =
+		{
+			"tag": "Script",
+			"attribute": { "type" : "xscript5.1" },
+			"value": sValue
+		}
+
+		return oScript;
+	};
+
+/*===============================================================================================*/
+/* Model Generation Related Functions                                                            */
+/*===============================================================================================*/
+	this.fn_makeFileDialog = function(objects){
+		var oObjects = objects;
+
+		var oFileDialog = {
+				"tag" : "FileDialog"
+			   ,"attribute" : {
+					"id"		: "fdg_fileDialog"
+	//			   ,"onclose" 	: "fn_fileDialog_onclose"
+			   }
+		};
+
+		oObjects[oObjects.length] = oFileDialog;
+	};
+
+	this.fn_makeButton = function(model){
+		var oModel = model;
+
+		//Create Button component
+		var nCompTop	= this.TOP_POSITION;
+		var nCompLeft   = this.LEFT_POSITION;
+		var nCompWidth  = "80";
+		var nCompHeight = "30";
+		var nCompRight 	= this.RIGHT_POSITION;
+		var oAddFile = {
+				"tag" : "Button"
+			   ,"attribute" : {
+					"id"		: "btn_addFile"
+				   ,"left"		: nCompLeft
+				   ,"top" 		: nCompTop
+				   ,"width"		: nCompWidth
+				   ,"height" 	: nCompHeight
+				   ,"text"  	: "ADD"
+				   ,"cssclass" 	: ""
+			   }
+		};
+
+		oModel[oModel.length] = { "fieldid" : "", "Components" : [oAddFile]};
+
+		nCompLeft = nexacro.toNumber(nCompLeft) + nexacro.toNumber(nCompWidth)+5;
+		var oDelFile = {
+				"tag" : "Button"
+			   ,"attribute" : {
+					"id"		: "btn_delFile"
+				   ,"left"		: nCompLeft
+				   ,"top" 		: nCompTop
+				   ,"width"		: nCompWidth
+				   ,"height" 	: nCompHeight
+				   ,"text"  	: "DELETE"
+				   ,"cssclass" 	: ""
+			   }
+		};
+
+		oModel[oModel.length] = { "fieldid" : "", "Components" : [oDelFile]};
+
+		var oDownFile = {
+				"tag" : "Button"
+			   ,"attribute" : {
+					"id"		: "btn_downFile"
+				   ,"top" 		: nCompTop
+				   ,"width"		: nCompWidth
+				   ,"height" 	: nCompHeight
+				   ,"right" 	: nCompRight
+				   ,"text"  	: "DOWN"
+				   ,"cssclass" 	: ""
+			   }
+		};
+		oModel[oModel.length] = { "fieldid" : "", "Components" : [oDownFile]};
+
+		nCompRight = nexacro.toNumber(nCompRight) + nexacro.toNumber(nCompWidth)+5;
+		var oUpFile = {
+				"tag" : "Button"
+			   ,"attribute" : {
+					"id"		: "btn_upFile"
+				   ,"top" 		: nCompTop
+				   ,"width"		: nCompWidth
+				   ,"height" 	: nCompHeight
+				   ,"right" 	: nCompRight
+				   ,"text"  	: "UP"
+				   ,"cssclass" 	: ""
+			   }
+		};
+
+		oModel[oModel.length] = { "fieldid" : "", "Components" : [oUpFile]};
+
+		this.TOP_POSITION =  nexacro.toNumber(this.TOP_POSITION) + nexacro.toNumber(nCompHeight) + 2;
+	};
+
+	this.fn_makeGridContent = function(model) {
+		var oModel = model;
+
+		//Field ID
+		var sFieldId;
+
+		//Import Model Field Quantity
+		var nFieldCount = this.oFieldArray.fields.length;
+
+		//Default Layout
+		var oBaseLayout;
+
+		//Layout to use when creating Head
+		var oHeadLayout;
+
+		//Layout to use when creating Body
+		var oBodyLayout;
+
+		//Layout to use when creating Summ
+		var oSummLayout;
+
+		//Set Grid Autofittype
+		var sAutofittype = this.oViewProperties.attributes.autofittype;
+
+		// Grid position
+		var nTop 	= this.TOP_POSITION;
+		var nBottom	= this.VIEW_PADDING_BOTTOM;
+		var nLeft	= this.LEFT_POSITION;
+		var nRight	= this.RIGHT_POSITION;
+
+		var oGrid = {
+			"tag" : "Grid",
+			"attribute" :
+			{
+				"id" 			: "grdList"
+			  , "left" 			: nLeft
+			  , "top" 			: nTop
+			  , "right" 		: nRight
+			  , "bottom" 		: nBottom
+			  , "binddataset" 	: "${VIEW_DATASET}"
+			  , "autofittype"	: sAutofittype
+			},
+			"Grid" :
+			[
+				{
+					"tag": "Formats",
+					"attribute": {},
+					"Formats":
+					[
+						{
+							"tag": "Format",
+							"attribute": { "id": "default" },
+							"Format":
+							[
+								{
+									"tag": "Columns",
+									"attribute": {},
+									//Load Grid Column Information Creation Function
+									"Columns": this.fn_GetColumns(oBaseLayout)
+								},
+								{
+									"tag": "Rows",
+									"attribute": {},
+									//Load Grid Row Information Creation Function
+									"Rows": this.fn_GetRows(oBaseLayout, oHeadLayout, oBodyLayout, oSummLayout)
+								},
+								{
+									"tag": "Band",
+									"attribute": { "id" : "head"},
+									//Load Grid Head Information Creation Function
+									"Band": this.fn_GetHeads(oBaseLayout, oHeadLayout)
+								},
+								{
+									"tag": "Band",
+									"attribute": { "id" : "body"},
+									//Load Grid Body Information Creation Function
+									"Band": this.fn_GetBodys(oBaseLayout, oBodyLayout)
+								}
+							]
+						}
+					]
+				}
+			]
+		};
+
+		// Set AutoSizeRow
+		if (this.bAutoSizeRow) {
+			oGrid["attribute"]["autosizingtype"] = "row";
+			oGrid["attribute"]["extendsizetype"] = "row";
+		}
+
+		//Add Grid Component
+		//var oModel = this.oContents.View.Model;
+
+		oModel[oModel.length] = { "fieldid" : "", "Components" : [oGrid]};
+
+		//Return Information of Model to be Created
+		return oModel;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	 * Function     : fn_GetColumns
+	 * Parameter    :
+	 *                - oBaseLayout : base layout data
+	 * Return       : column(s) data of grid format
+	 * Description  : Function to generate <Column> source
+	 *---------------------------------------------------------------------------------------------*/
+	this.fn_GetColumns = function(oBaseLayout)
+	{
+		var oColumns = [];
+		var oField;
+		var nCount
+		var nFieldWidth;
+
+		//If Layout is Set Up
+		if(oBaseLayout)
+		{
+			//Create Column Tags based on number of Default Layout Columnsize
+			nCount = oBaseLayout.columnsize.length;
+			for(var i=0;i<nCount;i++)
+			{
+				nFieldWidth = oBaseLayout.columnsize[i];
+
+				oColumns[oColumns.length] =
+				{
+					"tag": "Column",
+					"attribute": {"size": nFieldWidth, "band": "body"}
+				}
+			}
+		}
+		//If Layout is not Set Up
+		else
+		{
+			//Create Column Tags based on number of Model Field
+			nCount = this.oFieldArray.fields.length;
+			for(var i=0;i<nCount;i++)
+			{
+				oField = this.oFieldArray.fields[i];
+				nFieldWidth = oField.fieldwidth;
+				oColumns[oColumns.length] =
+				{
+					"tag": "Column",
+					"attribute": {"size": nFieldWidth, "band": "body"}
+				}
+			}
+		}
+		//Return Column Information
+		return oColumns;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	 * Function     : fn_GetRows
+	 * Parameter    :
+	 *                - oBaseLayout : base layout data
+					  - oHeadLayout : head layout data
+					  - oBodyLayout : body layout data
+					  - oSummLayout : summ layout data
+	 * Return       : row(s) data of grid format
+	 * Description  : Function to generate <Row> source
+	 *---------------------------------------------------------------------------------------------*/
+	this.fn_GetRows = function(oBaseLayout, oHeadLayout, oBodyLayout, oSummLayout)
+	{
+		var nCount;
+		var oRows = [];
+		var nHeadBandSize;
+		var nBodyBandSize;
+		var nSummBandSize;
+
+		//If Layout is Set Up
+		if(oBaseLayout)
+		{
+			//Add Row Tag for Head
+			if(oHeadLayout)
+			{
+				nCount = oHeadLayout.rowsize.length;
+				for(var i=0;i<nCount;i++)
+				{
+					nHeadBandSize = oHeadLayout.rowsize[i];
+					oRows[oRows.length] = {
+							"tag": "Row",
+							"attribute": {"size": nHeadBandSize, "band": "head"}
+						}
+				}
+			}
+
+			//Add Row Tag for Body
+			if(oBodyLayout)
+			{
+				nCount = oBodyLayout.rowsize.length;
+				for(var i=0;i<nCount;i++)
+				{
+					nBodyBandSize = oBodyLayout.rowsize[i];
+					oRows[oRows.length] = {
+							"tag": "Row",
+							"attribute": {"size": nBodyBandSize, "band": "body"}
+						}
+				}
+			}
+
+			//Add Row Tag for Summ
+			if(oSummLayout)
+			{
+				nCount = oSummLayout.rowsize.length;
+				for(var i=0;i<nCount;i++)
+				{
+					nSummBandSize = oSummLayout.rowsize[i];
+					oRows[oRows.length] = {
+							"tag": "Row",
+							"attribute": {"size": nSummBandSize, "band": "summ"}
+						}
+				}
+			}
+		}
+		//If Layout is not Set Up
+		else
+		{
+			//Import Size Information of each Band
+			nHeadBandSize = this.oViewProperties.attributes.headbandsize;
+			nBodyBandSize = this.oViewProperties.attributes.bodybandsize;
+			nSummBandSize = this.oViewProperties.attributes.summbandsize;
+
+			//Add Row Tag for Head if Head Size is bigger than -1
+			if(nHeadBandSize>-1)
+			{
+				oRows[oRows.length] = {
+							"tag": "Row",
+							"attribute": {"size": nHeadBandSize, "band": "head"}
+						}
+			}
+
+			//Add Row Tag for Body is Body Size is bigger than -1
+			if(nBodyBandSize>-1)
+			{
+				oRows[oRows.length] = {
+								"tag": "Row",
+								"attribute": {"size": nBodyBandSize, "band": "body"}
+							}
+			}
+
+			//Add Row Tag for Summ if Summ Size is bigger than -1
+			if(nSummBandSize>-1)
+			{
+				oRows[oRows.length] = {
+								"tag": "Row",
+								"attribute": {"size": nSummBandSize, "band": "summ"}
+							}
+			}
+		}
+
+		//Return Raw Information
+		return oRows;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	 * Function     : fn_GetHeads
+	 * Parameter    :
+	 *                - oBaseLayout : base layout data
+					  - oHeadLayout : head layout data
+	 * Return       : head band data of grid format
+	 * Description  : Function to generate <Band id="head"> source
+	 *---------------------------------------------------------------------------------------------*/
+	this.fn_GetHeads = function(oBaseLayout, oHeadLayout)
+	{
+		var nCount;
+		var nFieldCount;
+
+		var oHeads = [];
+
+		var arrCellList;
+		var oCell;
+		var nCol;
+		var nColSpan;
+		var nRow;
+		var nRowSpan;
+		var sCellText;
+
+		var oField;
+		var sFieldId = "";
+		var sLabel = "";
+		var sCssClass;
+		var sCellId = "";
+
+		var oCellInfo = [];
+
+		//If Layout is Set Up
+		if(oBaseLayout)
+		{
+			//If Head Layout is Set Up
+			if(oHeadLayout)
+			{
+				//Import number of Cells
+				arrCellList = oHeadLayout.celllist;
+				nCount = arrCellList.length;
+
+				for(var i=0;i<nCount;i++)
+				{
+					//Import Cell Information
+					oCell = arrCellList[i];
+					nCol = nexacro.toNumber(oCell.col);
+					nRow = nexacro.toNumber(oCell.row);
+					nColSpan = nexacro.toNumber(oCell.colspan);
+					nRowSpan = nexacro.toNumber(oCell.rowspan);
+					sCssClass = oCell.cssclass;
+
+					if(!nColSpan)nColSpan = 1;
+					if(!nRowSpan)nRowSpan = 1;
+
+					//Import Text Property Value
+					sCellText = oCell.text;
+
+					sLabel = "";
+
+					//If there is Field information included in Cell
+					if(oCell.fieldlist)
+					{
+						//Import Label Information from Field
+						//If there are multiple fields, express in label + label format
+						nFieldCount = oCell.fieldlist.length;
+						for(var j=0;j<nFieldCount;j++)
+						{
+							sFieldId = oCell.fieldlist[j];
+							oField = this.oFieldArray.fields.filter(fields=>fields.id==sFieldId)[0];
+							sLabel += oField.label;
+						}
+
+						if(nFieldCount == 1) {
+							sCssClass = this.lfn_GetCssClass(oCell, "cssclass", "", this.HEAD_REQUIRED_CSSCLASS);
+						}
+					}
+					//If there is no field information included in the cell
+					else
+					{
+						//Set text value as label if there is text property value
+						if(sCellText)sLabel = sCellText;
+					}
+
+					// Set cell info per field
+					sCellId = "cell_head_"+nCol+"_"+nRow+"_"+sFieldId;
+
+					if (!this.oFieldCellInfo.hasOwnProperty(sFieldId))
+					{
+						this.oFieldCellInfo[sFieldId] = {"head":[],"body":[],"summ":[]};
+					}
+
+					oCellInfo = this.oFieldCellInfo[sFieldId]["head"];
+					oCellInfo.push({"id": sCellId, "col": nCol, "row": nRow, "colspan": nColSpan, "rowspan": nRowSpan});
+
+					//Add Cell Tag on Head Band
+					oHeads[oHeads.length] =
+					{
+						"tag": "Cell",
+						"attribute":
+						{
+							"id": sCellId, "col": nCol, "row": nRow, "colspan": nColSpan, "rowspan": nRowSpan, "text": sLabel, "cssclass" : sCssClass
+						}
+					};
+
+
+				}
+			}
+		}
+		//If Layout is not Set Up
+		else
+		{
+			if(this.oViewProperties.attributes.headbandsize>-1)
+			{
+				//Import Model Field Quantity
+				nCount = this.oFieldArray.fields.length;
+
+				//Add Cell Tag on Head Band based on number of Fields
+				for(var i=0;i<nCount;i++)
+				{
+					oField = this.oFieldArray.fields[i];
+
+					sFieldId = oField.id;
+					sLabel = oField.label;
+					nCol = oHeads.length;
+					nRow = 0;
+					sCssClass = "";
+
+					// Set cell info per field
+					sCellId = "cell_head_"+nCol+"_"+nRow+"_"+sFieldId;
+
+					if (!this.oFieldCellInfo.hasOwnProperty(sFieldId))
+					{
+						this.oFieldCellInfo[sFieldId] = {"head":[],"body":[],"summ":[]};
+					}
+
+					// if(oField.required == "true") {
+					// 	sCssClass = this.HEAD_REQUIRED_CSSCLASS;
+					// }
+
+					oCellInfo = this.oFieldCellInfo[sFieldId]["head"];
+					oCellInfo.push({"id": sCellId, "col": nCol, "row": nRow});
+
+					oHeads[oHeads.length] =
+					{
+						"tag": "Cell",
+						"attribute":
+						{
+							"id": sCellId, "col": nCol, "row": nRow, "text": sLabel, "cssclass" : sCssClass
+						}
+					};
+				}
+			}
+		}
+
+		return oHeads;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	 * Function     : fn_GetBodys
+	 * Parameter    :
+	 *                - oBaseLayout : base layout data
+					  - oBodyLayout : body layout data
+	 * Return       : body band data of grid format
+	 * Description  : Function to generate <Band id="body"> source
+	 *---------------------------------------------------------------------------------------------*/
+	this.fn_GetBodys = function(oBaseLayout, oBodyLayout)
+	{
+		var nCount;
+		var nFieldCount;
+
+		var oBodys = [];
+
+		var arrCellList;
+		var oCell;
+		var nCol;
+		var nColSpan;
+		var nRow;
+		var nRowSpan;
+
+		var oField;
+		var sFieldId = "";
+		var sLabel = "";
+		var sDisplayType;
+		var sEditType;
+		var sCssClass = "";
+		var sCellCssClass = "";
+		var sCellId = "";
+		var sSuppress = "";
+		var sAutoSizeRow = "";
+		var sTextAlign = "";
+		var oCell;
+		var oCellProp;
+
+		var oCellInfo = [];
+
+		//If Layout is Set Up
+		if(oBaseLayout) {
+			//If Body Layout is Set Up
+			if(oBodyLayout) {
+				//Import number of Cells
+				arrCellList = oBodyLayout.celllist;
+				nCount = arrCellList.length;
+
+				for(var i=0;i<nCount;i++)
+				{
+					//Import Cell Information
+					oCell = arrCellList[i];
+					nCol = nexacro.toNumber(oCell.col);
+					nRow = nexacro.toNumber(oCell.row);
+					nColSpan = nexacro.toNumber(oCell.colspan);
+					nRowSpan = nexacro.toNumber(oCell.rowspan);
+					sCellCssClass = oCell.cssclass;
+
+					if(!nColSpan)nColSpan = 1;
+					if(!nRowSpan)nRowSpan = 1;
+
+					//Import Text Property Value
+					sCellText = oCell.text;
+
+					sLabel = "";
+					sSuppress = 0;
+					sAutoSizeRow = "none";
+
+					//If there is Field information included in Cell
+					if(oCell.fieldlist)
+					{
+						//Import number of fields included in the Cell
+						nFieldCount = oCell.fieldlist.length;
+
+						//If there is 1 Field, the Field and Bind
+						if(nFieldCount==1)
+						{
+							sFieldId = oCell.fieldlist[0];
+							oField = this.oFieldArray.fields.filter(fields=>fields.id==sFieldId)[0];
+							sDisplayType = this.lfn_GetAutoCompType(oField,"displaytype");
+							sEditType = this.lfn_GetAutoCompType(oField,"edittype");
+							sCssClass = oField.cssclass;
+							sSuppress = nexacro.toNumber(oField.suppress,0);
+							sAutoSizeRow = oField.autosizerow;
+							sTextAlign = oField.fieldTextAlign;
+							sLabel = "bind:"+sFieldId;
+						}
+						//If there are more than 1 Fields
+						//Use expr to express in Field+ Field Format
+						//Since it was set as expr, set as displaytype = normal, edittype = none
+						else
+						{
+							sLabel = "expr:";
+							for(var j=0;j<nFieldCount;j++)
+							{
+								sFieldId = oCell.fieldlist[j];
+								oField = this.oFieldArray.fields.filter(fields=>fields.id==sFieldId)[0];
+								sDisplayType = "normal";
+								sEditType = "none";
+
+								if(j==0)
+								{
+									sLabel += sFieldId;
+									sCssClass += oField.cssclass;
+								}
+								else
+								{
+									sLabel += "+"+sFieldId;
+									sCssClass += ","+oField.cssclass;
+								}
+							}
+						}
+					}
+					//If there is no field information included in the cell
+					else
+					{
+						//Set as displaytype = normal, edittype=none
+						sDisplayType = "normal";
+						sEditType = "none";
+						oField = null;
+
+						//Set text value as label if there is text property value
+						if(sCellText)sLabel = sCellText;
+					}
+
+					if(sCellCssClass)sCssClass = sCellCssClass;
+
+					// Default cell attribute values
+					oCellProp = this.lfn_GetCellProp("body",sDisplayType,sEditType,oField);
+
+					// Set cell info per field
+					sCellId = "cell_body_"+nCol+"_"+nRow+"_"+sFieldId;
+					oCell = {
+						"tag": "Cell",
+						"attribute":
+						{
+								"id"			: sCellId
+							   ,"col"			: nCol
+							   ,"row"			: nRow
+							   ,"colspan"		: nColSpan
+							   ,"rowspan"		: nRowSpan
+							   ,"text"			: sLabel
+							   ,"displaytype" 	: sDisplayType
+							   ,"edittype" 		: sEditType
+							   ,"cssclass"		: sCssClass
+							   ,"textAlign"		: sTextAlign
+						}
+					};
+
+					// Set Suppress
+					if (sSuppress > 0) {
+						oCell.attribute["suppress"] = sSuppress;
+					}
+
+					// Set AutoSizeRow
+					if (sAutoSizeRow != "none") {
+						oCell.attribute["autosizerow"] = "limitmin";
+
+						if (sAutoSizeRow == "autosize-wordwrap") {
+							oCell.attribute["wordWrap"] = "english";
+						}
+
+						if (this.bAutoSizeRow == false)		this.bAutoSizeRow = true;
+					}
+
+					// Set default cell attributes
+					if (!this.lfn_IsNull(oCellProp))		Object.assign(oCell.attribute, oCellProp);
+
+					// Set cell info per field
+					if (!this.oFieldCellInfo.hasOwnProperty(sFieldId))
+					{
+						this.oFieldCellInfo[sFieldId] = {"head":[],"body":[],"summ":[]};
+					}
+					oCellInfo = this.oFieldCellInfo[sFieldId]["body"];
+					oCellInfo.push({"id": sCellId, "col": nCol, "row": nRow, "colspan": nColSpan, "rowspan": nRowSpan});
+
+					//Add Cell Tag on Body Band
+					oBodys[oBodys.length] = oCell;
+				}
+			}
+		} else {	//If Layout is not Set Up
+			if(this.oViewProperties.attributes.bodybandsize>-1) {
+				//Import Model Field Quantity
+				nCount = this.oFieldArray.fields.length;
+
+				//Add Cell Tag on Body Band based on number of Fields
+				for(var i=0;i<nCount;i++)
+				{
+					oField = this.oFieldArray.fields[i];
+
+					sFieldId 		= oField.id;
+					sLabel 			= "bind:"+sFieldId;
+					sDisplayType 	= this.lfn_GetAutoCompType(oField,"displaytype");
+					sEditType 		= this.lfn_GetAutoCompType(oField,"edittype");
+					sCssClass 		= oField.cssclass;
+					sSuppress 		= nexacro.toNumber(oField.suppress,0);
+					sAutoSizeRow 	= oField.autosizerow;
+					sTextAlign 		= oField.fieldTextAlign;
+					nCol 			= oBodys.length;
+					nRow 			= 0;
+
+					// Default cell attribute values
+					oCellProp = this.lfn_GetCellProp("body",sDisplayType,sEditType,oField);
+
+					// Set cell info per field
+					sCellId = "cell_body_"+nCol+"_"+nRow+"_"+sFieldId;
+					oCell = {
+						"tag": "Cell",
+						"attribute":
+						{
+								"id"			: sCellId
+							   ,"col"			: nCol
+							   ,"row"			: nRow
+							   ,"text"			: sLabel
+							   ,"displaytype" 	: sDisplayType
+							   ,"edittype" 		: sEditType
+							   ,"cssclass"		: sCssClass
+							   ,"textAlign"		: sTextAlign
+						}
+					};
+
+					// Set Suppress
+					if (sSuppress > 0) {
+						oCell.attribute["suppress"] = sSuppress;
+					}
+
+					// Set AutoSizeRow
+					if (sAutoSizeRow != "none") {
+						oCell.attribute["autosizerow"] = "limitmin";
+
+						if (sAutoSizeRow == "autosize-wordwrap") {
+							oCell.attribute["wordWrap"] = "english";
+						}
+
+						if (this.bAutoSizeRow == false)		this.bAutoSizeRow = true;
+					}
+
+					// Set default cell attributes
+					if (!this.lfn_IsNull(oCellProp))		Object.assign(oCell.attribute, oCellProp);
+
+					// Set cell info per field
+					if (!this.oFieldCellInfo.hasOwnProperty(sFieldId))
+					{
+						this.oFieldCellInfo[sFieldId] = {"head":[],"body":[],"summ":[]};
+					}
+					oCellInfo = this.oFieldCellInfo[sFieldId]["body"];
+					oCellInfo.push({"id": sCellId, "col": nCol, "row": nRow});
+
+					oBodys[oBodys.length] = oCell;
+				}
+			}
+		}
+
+		return oBodys;
+	}
+
+/*===============================================================================================*/
+/* List of functions defined inside the script generated by fn_GetScript
+/*-----------------------------------------------------------------------------------------------*/
+/* Notes: 1. Do not include comments inside these functions.                                      */
+/*        2. Escape characters such as '\r, \n, \t' must not be used.                          */
+/*===============================================================================================*/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : _fnViewOnLoad
+	* Description  : Handles the onload event processing for the view component
+	*---------------------------------------------------------------------------------------------*/
+	this._fnViewOnLoad = function(objForm){
+		/*Objects linked with the file upload action*/
+		this.oUploadFileList = [];
+		this.oDownloadFileList = [];
+
+		/* Sets the view form reference so that functions declared in the view can access it */
+		this._ownerForm = objForm;
+
+		var oFileDs = this.parent.getViewDataset();
+		oFileDs.clearData();
+		/* Add FILE DIALOG onclose event */
+		this.fdg_fileDialog.addEventHandler("onclose", this.fn_fileDialog_onclose, this);
+
+		/* Add FILE add button event */
+		this.btn_addFile.addEventHandler("onclick", this.fn_btn_AddFile_click,this);
+
+		/* Add FILE delete button event */
+		this.btn_delFile.addEventHandler("onclick", this.fn_btn_DelFile_click,this);
+
+		/* Add GRID drop event */
+		this.grdList.addEventHandler("ondrop", this.fn_grdList_ondrop,this);
+
+		/* Select file on download */
+		oFileDs.addEventHandler("oncolumnchanged", this.fn_fileDs_onColumnchanged, this);
+	};
+
+	//Add button click event
+	this.fn_btn_AddFile_click = function(obj, e){
+		/*1 : FileDialog.LOAD, 2 : FileDialog.SAVE, 3 : FileDialog.MULTILOAD, 4 : FileDialog.SELFOLDER*/
+		this.fdg_fileDialog.open("File up Load",3,"%UaserApp%");
+	};
+
+	//Delete button click event
+	this.fn_btn_DelFile_click = function(obj, e){
+		var oFileDs = this.parent.getViewDataset();
+		for(var iRow = oFileDs.getRowCount()- 1 ; iRow >= 0 ; iRow--){
+			if(oFileDs.getColumn(iRow,"_CHK") > 0){
+				this.oUploadFileList.splice(iRow,1);
+				oFileDs.deleteRow(iRow);
+			}
+		}
+
+		/* Redefine order */
+		for(var i = 0 ; i < oFileDs.getRowCount() ;  i++){
+			oFileDs.setColumn(i,"FILE_SEQ", (i+1));
+		}
+	};
+
+	//Add file via grid drop
+	this.fn_grdList_ondrop = function(obj, e){
+		var oFileList = e.filelist;
+		this.vfn_fileAdd(oFileList);
+	};
+
+	//fileDialog onclose event
+	this.fn_fileDialog_onclose = function(obj, e){
+		var oFileList= e.virtualfiles;
+		this.vfn_fileAdd(oFileList);
+	};
+
+	//Common file add function
+	this.vfn_fileAdd = function(oFileList){
+		var oFileDs = this.parent.getViewDataset();
+		var oFile = null;
+		var nFindRow = -1;
+		for( var i = 0 ; i < oFileList.length ; i++){
+			oFile = oFileList[i];
+			nFindRow = oFileDs.findRow("ORG_FILE_ID",oFile.filename);
+			if(nFindRow < 0){
+				/* Setup for use in file upload transfer */
+				this.oUploadFileList[this.oUploadFileList.length] = oFile;
+
+				oFile.addEventHandler("onsuccess",this.fn_file_onsuccess,this);
+				oFile.addEventHandler("onerror",this.fn_file_onerror,this);
+
+				oFile.open(null,1);
+			} else {
+				window.alert(oFile.filename + " is a duplicate file name.");
+			}
+		}
+	};
+
+	//Success function when opening file
+	this.fn_file_onsuccess = function(obj, e){
+		var oFileDs = this.parent.getViewDataset();
+
+		switch(e.reason){
+			case 1:
+				obj.getFileSize();
+			break;
+			case 9:
+				var sExptType = obj.filename.lastIndexOf(".")+1;
+				var sFileType = obj.filename.substr(sExptType).toLowerCase();
+				var nNewRow = oFileDs.addRow();
+				oFileDs.setColumn(nNewRow, "_ROWTYPE","I");
+				oFileDs.setColumn(nNewRow, "FILE_SEQ",nNewRow+1);
+				oFileDs.setColumn(nNewRow, "FILE_CONTENTS","");
+				oFileDs.setColumn(nNewRow, "ORG_FILE_ID",obj.filename);
+				oFileDs.setColumn(nNewRow, "FILE_SIZE",this.fn_cutFileSize(e.filesize));
+				oFileDs.setColumn(nNewRow, "FILE_EXT",sFileType);
+			break;
+		}
+	};
+
+	//Error function when opening file
+	this.fn_file_onerror = function(obj, e){
+
+	};
+
+	//File size formatting function
+	this.fn_cutFileSize = function(fileSize){
+		var sOutput = fileSize + "bytes";
+		var aMultiples = ["KB","MB","GB","TB","PB","EB","ZB","YB"];
+		for(var nMultiple = 0 , nApprox = fileSize / 1024 ; nApprox > 1 ; nApprox/=1024, nMultiple++){
+			sOutput = nApprox.toFixed(3) + " " + aMultiples[nMultiple];
+		}
+		return sOutput;
+	};
+
+	this.fn_fileDs_onColumnchanged = function(obj, e){
+		if(e.columnid == "_CHK"){
+			if(e.newvalue =="1"){
+				this.oDownloadFileList.push({filekey:obj.getColumn(e.row,"FILE_ID"), filename : obj.getColumn(e.row,"ORG_FILE_ID")});
+			} else {
+				this.oDownloadFileList.splice(e.row,1);
+			}
+		}
+
+	}
+
+
+
+
+
+]]>
+  </Script>
+  <TestData>
+    <TestFields><![CDATA[{
+    "fields": [
+        {
+            "id": "field1",
+            "label": "Field1",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Boolean",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "truevalue": "Y",
+                "falsevalue": "N"
+            }
+        },
+        {
+            "id": "field2",
+            "label": "Field2",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Date",
+            "datatype": "DATE",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "dataformat": "yyyy-MM-dd"
+            }
+        },
+        {
+            "id": "field3",
+            "label": "Field3",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Time",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field4",
+            "label": "Field4",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "DateTime",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field5",
+            "label": "Field5",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "FromToDate",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field6",
+            "label": "Field6",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Email",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field7",
+            "label": "Field7",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Image",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field8",
+            "label": "Field8",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Label",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field9",
+            "label": "Field9",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Text",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field10",
+            "label": "Field10",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "LongText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field11",
+            "label": "Field11",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiLineText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field12",
+            "label": "Field12",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Password",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field13",
+            "label": "Field13",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Number",
+            "datatype": "INT",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field14",
+            "label": "Field14",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Phone",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field15",
+            "label": "Field15",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Price",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field16",
+            "label": "Field16",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Select",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "innerdataset_list": [
+                    {
+                        "label": "TOBESOFT",
+                        "value": "01"
+                    },
+                    {
+                        "label": "A Company",
+                        "value": "02"
+                    },
+                    {
+                        "label": "B Company",
+                        "value": "03"
+                    },
+                    {
+                        "label": "C Company",
+                        "value": "04"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "field17",
+            "label": "Field17",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiSelect",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field18",
+            "label": "Field18",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "ProgressBar",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        }
+    ]
+}]]>
+    </TestFields>
+    <TestViewProperties><![CDATA[{
+    "attributes": {
+        "titletext": "This is title",
+        "fieldwidth": 250,
+        "labelwidth": 100
+    }
+}]]>
+    </TestViewProperties>
+  </TestData>
+</ViewTemplateInfo>

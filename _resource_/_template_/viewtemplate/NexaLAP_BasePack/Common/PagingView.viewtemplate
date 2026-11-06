@@ -1,0 +1,946 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ViewTemplateInfo version="2.0">
+  <ViewTemplate id="PagingView" viewtype="Others" description_en="description of the view template"/>
+  <Script version="1.0" type="xscript5.1"><![CDATA[/************************************************************************************************
+*  @FileName 	PagingView
+*  @Creator 	Tobesoft
+*  @CreateDate 	2026.01.02
+*  @Desction    
+*  @Version		1.0.0.0
+*************************************************************************************************
+*  Revision History
+*************************************************************************************************
+*  Date          		Modifier                Description
+*************************************************************************************************
+*  YYYY.MM.DD     		Author       	        Initial creation
+************************************************************************************************/
+/************************************************************************************************
+ * Include Declarations  
+ ************************************************************************************************/
+ 	include "../_lib_/util.xjs";
+	include "../_lib_/basicCommon.xjs";
+
+/************************************************************************************************
+ * Variable Definitions
+ ************************************************************************************************/
+ 	this.PADDING = 10;
+	//---------------------
+	//paging setting
+	//---------------------
+	//paging position("left", "center", "right")	
+	this.PAGING_POSITION = "right";
+
+	// paging position list
+	this.PAGING_POSITION_LIST = ["left", "center", "right"];
+
+	//spin button default size
+	this.PAGE_SIZE = 30;
+
+	//button default CSS Class
+	this.BUTTON_CSSCLASS = "btn_WF_Search";
+
+	this.EDIT_CSSCLASS = "";
+
+	//---------------------
+	//infomation setting
+	//---------------------
+	//infomation position("left", "center", "right")	
+	this.INFOMATION_POSITION = "left";
+
+	// infomation position list
+	this.INFOMATION_POSITION_LIST = ["left", "right"];
+
+	//---------------------
+	//valiable setting
+	//---------------------
+	//model information
+	this.oFieldArray;
+
+	//view component information
+	this.oContents;
+
+	//option setting information
+	this.oViewProperties;
+
+	//for ViewProperties return
+	this.oViewPropertiesValue = {};
+
+	//component ID list
+	this.arrCompIds = [];
+
+	//component + bind Field list
+	this.arrBindItems = [];
+
+	this.COMP_NAMING_RULE = "C";
+/************************************************************************************************
+ * Required Function Area for NexaLAP Studio
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     	: set_viewProperties
+	* Return       	: List of view generation attributes (JSON format)
+	* Description 	: Defines the attributes applied to the overall view during view generation.
+	*---------------------------------------------------------------------------------------------*/
+	this.set_viewProperties = function() {
+		let sViewAttr = "";
+		let oViewAttr = {"attributes" : []};
+		let oProperties = {};
+		
+		oProperties={};
+		oProperties.id 				= "infoposition";
+		oProperties.displaytext 	= "Info Position";
+		oProperties.edittype 		= "Enum";
+		oProperties.enumlist 		= this.INFOMATION_POSITION_LIST;
+		oProperties.defaultvalue 	= this.INFOMATION_POSITION;
+		oProperties.description 	= "Info Position";
+		oProperties.group		 	= "info";
+		oViewAttr.attributes.push(oProperties);
+
+		oProperties={};
+		oProperties.id 				= "spinbuttoncssclass";
+		oProperties.displaytext 	= "Spin Button Class";
+		oProperties.edittype 		= "String";
+		oProperties.defaultvalue 	= this.BUTTON_CSSCLASS;
+		oProperties.description 	= "Spin Button Class Id";
+		oProperties.group		 	= "paging";
+		oViewAttr.attributes.push(oProperties);
+		
+		oProperties={};
+		oProperties.id 				= "pagingposition";
+		oProperties.displaytext 	= "Paging Position";
+		oProperties.edittype 		= "Enum";
+		oProperties.enumlist 		= this.PAGING_POSITION_LIST;
+		oProperties.defaultvalue 	= this.PAGING_POSITION;
+		oProperties.description 	= "Paging Position";
+		oProperties.group		 	= "paging";
+		oViewAttr.attributes.push(oProperties);
+
+		 oProperties={};
+		 oProperties.id 			= "pagingcnt";
+		 oProperties.displaytext 	= "Paging Cnt";
+		 oProperties.edittype 		= "Number";
+		 oProperties.defaultvalue 	= 10;
+		 oProperties.description 	= "Sets the Paging View Count.";
+		 oProperties.group		 	= "paging";
+		 oViewAttr.attributes.push(oProperties);
+
+		// oProperties={};
+		// oProperties.id 				= "fieldWidth";
+		// oProperties.displaytext 	= "Field Width";
+		// oProperties.edittype 		= "string";
+		// oProperties.defaultvalue 	= this.FIELD_WIDTH;
+		// oProperties.description 	= "Sets the Component Width value.";
+		// oProperties.group		 	= "Field";
+		// oViewAttr.attributes.push(oProperties);
+
+		// oProperties={};
+		// oProperties.id 				= "layout";
+		// oProperties.displaytext 	= "Layout";
+		// oProperties.edittype 		= "Layout";
+		// oProperties.defaultvalue 	= "";
+		// let oUserProperties = {"propertcount" : "1", "properties" : []};
+		
+		// let oProperty = {};
+		// oProperty.id 			= "mergelabel";
+		// oProperty.edittype 		= "Boolean";
+		// oProperty.defaultvalue 	= "false";
+		// oProperty.description 	= "Whether to display a unified label when multiple fields are configured." + "\n" + " - The label is generated based on the first field.";
+		// oUserProperties.properties.push(oProperty);
+		// oProperties.userproperties 	= oUserProperties;
+		// oProperties.description	 	= "Sets the View Layout.";
+		//oViewAttr.attributes.push(oProperties);
+
+
+		oViewAttr["attributecount"] = oViewAttr.attributes.length;
+				
+		sViewAttr = JSON.stringify(oViewAttr, null, "\t");
+
+		return sViewAttr;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : set_fieldProperties
+	* Return       : List of field-level attributes for view generation (JSON format)
+	* Description  : Defines the attributes applied to each model field during view generation.
+	*---------------------------------------------------------------------------------------------*/
+	this.set_fieldProperties = function() {
+		// let sFieldAttr = "";
+		// let oFieldAttr = {"attributes": []};
+		// let oProperties = {};
+		
+		// oProperties={};
+		// oProperties.id 				= "comptype";
+		// oProperties.displaytext 	= "Comp Type";
+		// oProperties.edittype 		= "Enum";
+		// oProperties.enumlist		= this.ARR_COMP_TYPE;
+		// oProperties.defaultvalue 	= this.COMP_TYPE;
+		// oProperties.description 	= "Types of Components to be Expressed";
+		
+		// oFieldAttr.attributes.push(oProperties);
+
+		// sFieldAttr = JSON.stringify(oFieldAttr, null, "\t");
+		// return sFieldAttr;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : set_viewPropertiesValue
+	* Return       :
+	* Description  :
+	*---------------------------------------------------------------------------------------------*/
+	// this.set_viewPropertiesValue = function ()
+	// {
+	// 	let sPropertiesValue = "";
+
+	// 	if (this.oViewPropertiesValue) {
+	// 		let oValues = this.oViewPropertiesValue;
+
+	// 		sPropertiesValue = JSON.stringify(oValues, null, "\t");
+	// 	}
+
+	// 	return sPropertiesValue;
+	// }
+	
+	/*---------------------------------------------------------------------------------------------*
+	 * Function    	: main
+	 * Parameters  	:
+	 * 				 - fieldarray     : List of model fields
+	 *  			 - contents       : Existing contents (including <View> element)
+	 *  			 - viewproperties : Attributes for view generation
+	 * Return      	: View definition (source + script) in JSON format
+	 * Description	: Generates the view based on the model fields and returns the result.
+	 *---------------------------------------------------------------------------------------------*
+	 *                        !!! This function is required by NexaLAP Studio. !!!                 *
+	 *                        !!! Do not remove or rename this function. !!!                       *
+	 *---------------------------------------------------------------------------------------------*/
+	this.main = function(fieldarray, contents, viewproperties) {
+		let sResult = "";
+
+		//Set model information as JSON object
+		if(fieldarray) {
+			this.oFieldArray = JSON.parse(fieldarray);
+		}
+
+		//Set option setting information as JSON object
+		if(contents) {
+			this.oContents = JSON.parse(contents);
+
+			// Initialize Model Information
+			this.oContents.View.Model = [];
+
+		}
+		// Set Option Setting Information as JSON Object
+		if(viewproperties) {
+			this.oViewProperties = JSON.parse(viewproperties);
+		}
+
+		// When binding is required for the selected field list, the viewdataset should be set.
+		this.oContents.View.attribute.viewdataset = "${VIEW_DATASET}";
+
+		this.oContents.View.attribute.pagingcnt = this.oViewProperties.attributes.pagingcnt;
+												  
+		//Call model information generation function
+		this.fn_GetModel();
+
+		//Call InitValue information generation function
+		this.oContents.View.InitValue = this.fn_GetInitValue();
+
+		//Call Object information generation function
+		this.oContents.View.Objects = this.fn_GetObjects();
+
+		//Call BindInfo information generation function
+		this.oContents.View.Bind = this.fn_GetBind(this.oContents.View.Bind);
+
+		//Call Script information generation function
+		this.oContents.View.Script = this.fn_GetScript();
+
+		//Initialize unnecessary component information
+		this.fnClearContents();
+
+		//Convert view component information to String
+		sResult = JSON.stringify(this.oContents, null, "\t");
+//nexacro.trace(sResult);
+		return sResult;
+	};
+
+/************************************************************************************************
+ * Function list called from main function
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetModel
+	* Parameter    :
+	* Return       :
+	* Description  : Function to generate model information
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetModel = function(){
+		//Get View Component Width value
+		let nViewCompWidth = this.oContents.View.referenceinfo.realwidth;
+
+		//Get View Component Height value
+		let nViewCompHeight = this.oContents.View.referenceinfo.realheight;
+
+
+		//Create from here
+		this.fn_createInfo(nViewCompHeight);
+		
+		this.fn_createPage(nViewCompWidth, nViewCompHeight);
+	};
+
+
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetInitValue
+	* Parameter    :
+	* Return       : initvalue contents (JSON format)
+	* Description  : Function to generate <InitValue> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetInitValue = function(){
+
+		let oInitValue = [];
+
+		return oInitValue;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetObjects
+	* Parameter    :
+	* Return       : objects contents (JSON format)
+	* Description  : Function to generate <Objects> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetObjects = function(){
+		//Initialize Object
+		var oObjects = [];
+
+		// InnerDataset information
+	//	var oInner = this.fn_GetInnerDataset(this.oFieldArray);
+
+	//	oObjects = oObjects.concat(oInner);
+		
+		//Return Object Information
+		return oObjects;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetBind
+	* Parameter    :
+	* Return       : bind contents (JSON format)
+	* Description  : Function to generate <Bind> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetBind = function(){
+		let sBindDataset = "${VIEW_DATASET}";
+
+		let oBind = [];
+		let oBindItems = [];
+
+		let sCompId
+		let sFieldId;
+		let sCompType;
+		let sCompClassId;
+		let nBindItemCount = this.arrBindItems.length;
+		let sPropid ;
+
+		for(let i=0;i<nBindItemCount;i++) {
+			sCompId			= this.arrBindItems[i].compid;
+			sFieldId		= this.arrBindItems[i].fieldid;
+			sCompType		= this.arrBindItems[i].comptype;
+			sCompClassId	= this.arrBindItems[i].compclassid;
+
+			let oBindItem = {};
+			oBindItem.tag = "BindItem";
+			oBindItem.attribute = {};
+			oBindItem.attribute.id = "bind_"+sCompId;
+			oBindItem.attribute.compid = sCompId;
+			sPropid = "value";
+			if(sCompClassId=="Static" || sCompType == "static"){
+				sPropid = "text";
+			} else if(sCompClassId=="ImageViewer" || sCompType == "imageviewer"){
+				sPropid = "image";
+			} else if(sCompClassId=="WebView" || sCompClassId=="WebBrowser" || sCompType == "webview" || sCompType == "webbrowser"){
+				sPropid = "url";
+			} else if(sCompClassId=="AbstractSelectAny" || sCompType == "selectany"){
+				sPropid = "multivalue";
+			}
+			oBindItem.attribute.propid = sPropid;
+			oBindItem.attribute.datasetid = sBindDataset;
+			oBindItem.attribute.columnid = sFieldId;	
+
+			oBindItems[i] = oBindItem;			
+		}
+
+		oBind[oBind.length] = {"tag" : "Bind", "Bind" : oBindItems};
+
+		return oBind;
+	};
+	
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetScript
+	* Parameter    :
+	* Return       : script contents (JSON format)
+	* Description  : Function to generate <Script> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetScript = function(){
+		//Initialize Script Information
+		let oScript = {};
+		let sValue = "this._fnViewOnLoad = "
+					+ nexacro.replaceAll(nexacro.replaceAll(nexacro.replaceAll(this._fnViewOnLoad.toString(),"\r",""),"\n",""),"\t","")
+					+ ";"
+		oScript =
+		{
+			"tag": "Script",
+			"attribute": { "type" : "xscript5.1" },
+			"value": sValue
+		}
+
+		return oScript;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fnClearContents
+	* Parameter    :
+	* Description  : Function to delete unnecessary components
+	*---------------------------------------------------------------------------------------------*/	
+	this.fnClearContents = function()
+	{
+		//Get original Layout information
+		let oLayout = this.oContents.View.View[0].Layouts[0].Layout;
+		//Get current Model information
+		let oModel = this.oContents.View.Model;
+		let oComp;
+		//If Layout exists
+		if(oLayout){
+			for (let i = oLayout.length-1; i >= 0; i--){
+
+				//Remove previously created components via ViewTemplate
+				if (oLayout[i].attribute && oLayout[i].attribute._fieldid) {
+					oLayout.splice(i, 1);
+				} else {
+					//Remove user-added components from Layout and append to end of Model					
+					oComp = oLayout.splice(i, 1);
+					oModel[oModel.length] = {
+						"fieldid" : "",
+						"Components" : oComp
+					}
+				}
+			}
+		}
+	};
+
+/************************************************************************************************
+ * Functions called from fn_GetModel function
+ ************************************************************************************************/
+	this.fn_createInfo = function(nViewHeight){
+		let oModel = this.oContents.View.Model;
+		oModel[oModel.length] = {"fieldid" : "_infomation","Components" : []};	
+
+		//InfoMation Position Type(left, center, right)
+		let sInfoPosition = this.oViewProperties.attributes.infoposition;		
+
+		let oInfoStatic = {};
+		oInfoStatic.tag = "Static";
+		oInfoStatic.attribute = {};
+		oInfoStatic.attribute.id = "stc_info";
+		oInfoStatic.attribute.taborder = "0";
+		oInfoStatic.attribute.cssclass = "sta_WF_SubTitle0515";
+
+		if(sInfoPosition == "left"){
+			oInfoStatic.attribute.left = this.PADDING;
+		} else {
+			oInfoStatic.attribute.right = this.PADDING;
+		}
+
+		let nTop = (nViewHeight - this.PAGE_SIZE)/2;
+		oInfoStatic.attribute.top = nTop;
+
+		oInfoStatic.attribute.height = this.PAGE_SIZE;
+		oInfoStatic.attribute.width = 150;
+		oInfoStatic.attribute._fieldid = "stcInfo";
+		oInfoStatic.attribute._fieldcomptype = "comp";
+
+		oInfoStatic = this.fnMergeField(oInfoStatic);
+		oModel[oModel.length-1].Components.push(oInfoStatic);
+
+		let oStandard = {};
+		oStandard.tag = "Static";
+		oStandard.attribute = {};
+		oStandard.attribute.id = "stc_standard";
+		oStandard.attribute.taborder = "1";
+		oStandard.attribute.left = "50%";
+		oStandard.attribute.top = 0;
+		oStandard.attribute.bottom = 0;
+		oStandard.attribute.width =1;
+		oStandard.attribute.visible = false;
+		oStandard.attribute._fieldid = "stcStandard";
+		oStandard.attribute._fieldcomptype = "comp";
+
+		oStandard = this.fnMergeField(oStandard);
+		oModel[oModel.length-1].Components.push(oStandard);
+	}
+
+	this.fn_createPage = function(nViewWidth, nViewHeight){
+		let oModel = this.oContents.View.Model;
+		oModel[oModel.length] = {"fieldid" : "_paging","Components" : []};	
+
+		//InfoMation Position Type(left, center, right)
+		let sInfoPosition = this.oViewProperties.attributes.infoposition;	
+
+		//InfoMation Position Type(left, center, right)
+		let sPagingPosition = this.oViewProperties.attributes.pagingposition;
+
+		let oComponents = [];
+		
+		let oObject = {};
+		let nLeft = 0;
+		oObject.tag = "Button";
+		oObject.attribute = {};
+		oObject.attribute.id = "btn_prev";
+		oObject.attribute.left = nLeft; 
+		oObject.attribute.top = 0;
+		oObject.attribute.width = this.PAGE_SIZE;
+		oObject.attribute.height = this.PAGE_SIZE;
+		oObject.attribute.cssclass = "btn_WF_PageL";
+		oObject.attribute._fieldid = "_btnPrev";
+		oObject.attribute._fieldcomptype = "comp";
+		oComponents.push(oObject);
+
+		nLeft = nLeft + this.PAGE_SIZE + 5;
+		oObject = {};
+		oObject.tag = "Static";
+		oObject.attribute = {};
+		oObject.attribute.id = "sta_page";
+		oObject.attribute.left = nLeft; 
+		oObject.attribute.top = 0;
+		oObject.attribute.width = this.PAGE_SIZE;
+		oObject.attribute.height = this.PAGE_SIZE;
+		oObject.attribute.textAlign = "center";
+		oObject.attribute._fieldid = "_staPage";
+		oObject.attribute._fieldcomptype = "comp";
+		oComponents.push(oObject);
+
+		arrBindItems[arrBindItems.length] = {"compid" : oObject.attribute.id, "fieldid" : "PAGE_INDEX", "comptype" : "auto"};		
+
+		nLeft = nLeft + this.PAGE_SIZE + 5;
+		oObject = {};
+		oObject.tag = "Button";
+		oObject.attribute = {};
+		oObject.attribute.id = "btn_next";
+		oObject.attribute.left = nLeft; 
+		oObject.attribute.top = 0;
+		oObject.attribute.width = this.PAGE_SIZE;
+		oObject.attribute.height = this.PAGE_SIZE;
+		oObject.attribute.cssclass = "btn_WF_PageR";
+		oObject.attribute._fieldid = "_btnNext";
+		oObject.attribute._fieldcomptype = "comp";
+		oComponents.push(oObject);		
+
+		let oLayout = {};
+		oLayout.tag = "Layout";
+		oLayout.Layout = oComponents;
+
+		let oLayouts = [{"tag":"Layouts", "Layouts" : [oLayout]}];
+		
+		let oDiv = {};
+		oDiv.tag = "Div";
+		oDiv.attribute = {};
+		oDiv.attribute.id = "div_page";
+		if(sPagingPosition == "center"){
+			oDiv.attribute.left = "stc_standard:-50";
+		} else {
+			if(sInfoPosition == "left"){
+				if(sPagingPosition == "left"){
+					oDiv.attribute.left = "stc_info:10";
+				} else {
+					oDiv.attribute.right = this.PADDING;
+				}
+			} else {
+				if(sPagingPosition == "left"){
+					oDiv.attribute.left = this.PADDING;
+				} else {
+					oDiv.attribute.right = "stc_info:10";
+				}
+			}
+		}
+//		oDiv.attribute.left = 200;
+		oDiv.attribute.top = (nViewHeight - this.PAGE_SIZE)/2;
+		oDiv.attribute.width = 100;
+		oDiv.attribute.height = this.PAGE_SIZE;
+		oDiv.attribute._fieldid = "_divPage";
+		oDiv.attribute._fieldcomptype = "comp";
+		oDiv.Div = oLayouts;
+
+		oDiv = this.fnMergeField(oDiv);
+		oModel[oModel.length-1].Components.push(oDiv);
+	};
+/************************************************************************************************
+ * Functions called from fn_GetObjects function
+ ************************************************************************************************/	 
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fnMergeField
+	* Parameter    : oComp : current component information
+	* Return       : oComp : modified component information
+	* Description  : Function to apply information defined in oContents to components to be updated
+	*---------------------------------------------------------------------------------------------*/
+	this.fnMergeField = function(oComp)
+	{
+		//Do not merge when Layout is newly created
+		if(this.bNewLayout==true)return oComp;
+      
+		//Get original Layout information
+		let oLayout = this.oContents.View.View[0].Layouts[0].Layout;
+		
+		//If Layout exists
+		if(oLayout)
+		{
+			let objPropsOrg;
+			let objProps;
+
+			//Current component's Field Id
+			let sFieldId = oComp.attribute._fieldid;
+
+			//Current component's Field Comp Type (comp, label, bg, etc.)
+			let sFieldCompType = oComp.attribute._fieldcomptype;
+
+			//Search whether current component information exists in Layout
+			let nIdx = oLayout.findIndex(item => item.attribute._fieldid === sFieldId&&item.attribute._fieldcomptype === sFieldCompType);
+
+			//If information exists
+			if(nIdx>-1)
+			{
+				//Get current component's property information
+				objProps = oComp.attribute;
+
+				//Get component properties set in Layout
+				oFieldOrg = oLayout.splice(nIdx, 1)[0];
+				objPropsOrg = oFieldOrg.attribute;
+
+				//Do not merge existing properties when component type has changed
+				if(oComp.tag!=oFieldOrg.tag){
+					return oComp;
+				}
+            
+				//Exclude position-related properties
+				let arrExcludeKeys = ["top", "left", "width", "height", "right", "bottom"];
+
+				// Add values from Layout to Model
+				Object.keys(objPropsOrg).forEach(
+               		key => {
+								if (arrExcludeKeys.includes(key)){
+									return;
+								}
+
+								if(this.lfn_IsNull(objPropsOrg[key])==true){
+									return;
+								}
+
+								if(this.lfn_IsNull(objProps[key])==false){
+									return;
+								}
+
+								objProps[key] = objPropsOrg[key];
+                  			}
+				);
+			}
+		}
+		return oComp;
+	};	
+/*===============================================================================================*/
+/*                           Function list for use as strings in script                            */
+/*-----------------------------------------------------------------------------------------------*/
+/* Caution: 1. Comments cannot be used inside functions                                                    */
+/*          2. e.g.) \r,\n,\t string characters cannot be used                                               */
+/*===============================================================================================*/	
+	//view initialization function
+	this._fnViewOnLoad = function(objForm){
+		/*Configuration for using view form in functions declared on view*/
+		this._ownerForm = objForm;
+	};]]>
+  </Script>
+  <TestData>
+    <TestFields><![CDATA[{
+    "fields": [
+        {
+            "id": "field1",
+            "label": "Field1",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Boolean",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "truevalue": "Y",
+                "falsevalue": "N"
+            }
+        },
+        {
+            "id": "field2",
+            "label": "Field2",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Date",
+            "datatype": "DATE",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "dataformat": "yyyy-MM-dd"
+            }
+        },
+        {
+            "id": "field3",
+            "label": "Field3",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Time",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field4",
+            "label": "Field4",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "DateTime",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field5",
+            "label": "Field5",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "FromToDate",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field6",
+            "label": "Field6",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Email",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field7",
+            "label": "Field7",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Image",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field8",
+            "label": "Field8",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Label",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field9",
+            "label": "Field9",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Text",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field10",
+            "label": "Field10",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "LongText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field11",
+            "label": "Field11",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiLineText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field12",
+            "label": "Field12",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Password",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field13",
+            "label": "Field13",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Number",
+            "datatype": "INT",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field14",
+            "label": "Field14",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Phone",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field15",
+            "label": "Field15",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Price",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field16",
+            "label": "Field16",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Select",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "innerdataset_list": [
+                    {
+                        "label": "TOBESOFT",
+                        "value": "01"
+                    },
+                    {
+                        "label": "A Company",
+                        "value": "02"
+                    },
+                    {
+                        "label": "B Company",
+                        "value": "03"
+                    },
+                    {
+                        "label": "C Company",
+                        "value": "04"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "field17",
+            "label": "Field17",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiSelect",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field18",
+            "label": "Field18",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "ProgressBar",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        }
+    ]
+}]]>
+    </TestFields>
+    <TestViewProperties><![CDATA[{
+    "attributes": {
+        "titletext": "This is title",
+        "fieldwidth": 250,
+        "labelwidth": 100
+    }
+}]]>
+    </TestViewProperties>
+  </TestData>
+</ViewTemplateInfo>

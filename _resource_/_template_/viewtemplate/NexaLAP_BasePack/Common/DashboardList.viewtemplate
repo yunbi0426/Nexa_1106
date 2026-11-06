@@ -1,0 +1,723 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ViewTemplateInfo version="2.0">
+  <ViewTemplate id="DashboardList" viewtype="Others" description_en="description of the view template"/>
+  <Script version="1.0" type="xscript5.1"><![CDATA[/************************************************************************************************
+*  @FileName 	DashboardList
+*  @Creator 	Tobesoft
+*  @CreateDate 	2026.01.02
+*  @Desction    Displays data in a basic list format
+*  @Version		1.0.0.0
+*************************************************************************************************
+*  Revision History
+*************************************************************************************************
+*  Date          		Modifier                Description
+*************************************************************************************************
+*  YYYY.MM.DD     		Author       	        Initial creation
+************************************************************************************************/
+/************************************************************************************************
+ * Include Declarations
+ ************************************************************************************************/
+	include "../_lib_/util.xjs";
+	include "../_lib_/common.xjs";
+/************************************************************************************************
+ * Variable Definitions
+ ************************************************************************************************/
+	//-------------------------------------------------------------------------------------------
+	// View-related constants
+	//-------------------------------------------------------------------------------------------
+
+	// Template-specific layout configuration
+	this.TITLE_TOP = 0;
+	this.TITLE_LEFT = 0;
+	this.TITLE_RIGHT = 0;
+	this.TITLE_HEIGHT = 40;
+
+	this.VIEW_PADDING = "10";		// Default padding for the view
+	//-------------------------------------------------------------------------------------------
+	// View-related variables
+	//-------------------------------------------------------------------------------------------
+	// List of model fields
+	this.oFieldArray;
+
+	// Existing contents (including <View> element)
+	this.oContents;
+	this.arrBindItems = [];
+
+	// Properties for view
+	this.oViewProperties;
+
+/************************************************************************************************
+ * Required Function Area for NexaLAP Studio
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     	: set_viewProperties
+	* Return       	: List of view generation attributes (JSON format)
+	* Description 	: Defines the attributes applied to the overall view during view generation.
+	*---------------------------------------------------------------------------------------------*/
+	this.set_viewProperties = function() {
+		let sViewAttr = "";
+		let oViewAttr = {"attributes" : []};
+		let oProperties = {};
+		
+		// Title text properties
+		// oProperties={};
+		// oProperties.id 				= "titletext";
+		// oProperties.displaytext 	= "Title text";
+		// oProperties.edittype 		= "String";
+		// oProperties.defaultvalue 	= this.TITLE_TEXT;
+		// oProperties.description 	= "Set the title text (Other fields will not be created if title text is not entered)";
+		// oViewAttr.attributes.push(oProperties);
+
+		// View padding setting 
+		// oProperties = this.oAttrViewPadding;
+		// oViewAttr.attributes.push(oProperties);
+
+		sViewAttr = JSON.stringify(oViewAttr, null, "\t");	
+
+		return sViewAttr;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : set_fieldProperties
+	* Return       : List of field-level attributes for view generation (JSON format)
+	* Description  : Defines the attributes applied to each model field during view generation.
+	*---------------------------------------------------------------------------------------------*/
+	this.set_fieldProperties = function() {
+		let sFieldAttr = "";
+		let oFieldAttr = {"attributes": []};
+		let oProperties = {};
+
+		// oProperties={};
+		// oProperties.id 				= "displaytype";
+		// oProperties.displaytext 	= "Display type";
+		// oProperties.edittype 		= "Enum";
+		// oProperties.enumlist		= this.ARR_GRD_DISPLAY_TYPE;
+		// oProperties.defaultvalue 	= this.DISPLAY_TYPE;
+		// oProperties.description 	= "Set the Field Expression";
+		// oFieldAttr.attributes.push(oProperties);
+
+		sFieldAttr = JSON.stringify(oFieldAttr, null, "\t");
+
+		return sFieldAttr;
+	}
+
+	/*---------------------------------------------------------------------------------------------*
+	 * Function    	: main
+	 * Parameters  	:
+	 * 				 - fieldarray     : List of model fields
+	 *  			 - contents       : Existing contents (including <View> element)
+	 *  			 - viewproperties : Attributes for view generation
+	 * Return      	: View definition (source + script) in JSON format
+	 * Description	: Generates the view based on the model fields and returns the result.
+	 *---------------------------------------------------------------------------------------------*
+	 *                        !!! This function is required by NexaLAP Studio. !!!                 *
+	 *                        !!! Do not remove or rename this function. !!!                       *
+	 *---------------------------------------------------------------------------------------------*/
+	this.main = function(fieldarray, contents, viewproperties) {
+		let sResult = "";
+
+		// Convert the data into a JSON object
+		if(fieldarray) {
+			this.oFieldArray = JSON.parse(fieldarray);
+		}
+
+		// Set View Component Information as JSON Object
+		if(contents) {
+			this.oContents = JSON.parse(contents);
+
+			// Initialize Model Information
+			this.oContents.View.Model = [];
+		}
+
+		// Set Option Setting Information as JSON Object
+		if(viewproperties) {
+			this.oViewProperties = JSON.parse(viewproperties);
+		}
+
+		// View padding setting
+    	// this.lfn_SetViewPadding();
+
+		// Generate model information
+		this.fn_GetModel();
+
+		// When binding is required for the selected field list, the viewdataset must be set.
+		this.oContents.View.attribute.viewdataset = "${VIEW_DATASET}";
+
+		// Call function to generate InitValue information
+		this.oContents.View.InitValue = this.fn_GetInitValue();
+
+		// Call function to generate Object information
+		this.oContents.View.Objects = this.fn_GetObjects();
+
+		// Call function to generate Script information
+		this.oContents.View.Script = this.fn_GetScript();
+
+		// Initialize unnecessary component information
+		this.fnClearContents();
+				
+		// Convert view component information to String
+		sResult = JSON.stringify(this.oContents, null, "\t");
+
+		return sResult;
+	};
+
+/************************************************************************************************
+ * Functions Related to the main() Execution Flow
+ ************************************************************************************************/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetModel
+	* Return       : model contents (JSON format)
+	* Description  : Function to generate a component source based on field information of the model entered by the user
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetModel = function() {
+		this.fn_MakeListView();
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetInitValue
+	* Parameter    :
+	* Return       : initvalue contents (JSON format)
+	* Description  : Function to generate <InitValue> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetInitValue = function(){
+
+		let oInitValue = [];
+
+		return oInitValue;
+	};
+	
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetObjects
+	* Return       : objects contents (JSON format)
+	* Description  : Function to generate <Objects> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetObjects = function() {
+
+		//Initialize Object
+		let oObjects = [];
+
+		// InnerDataset information
+		//let oInner = this.fn_GetInnerDataset(this.oFieldArray);
+
+		//oObjects = oObjects.concat(oInner);
+
+		//Return Object Information
+		return oObjects;
+	};
+
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetBind
+	* Parameter    :
+	* Return       : bind contents (JSON format)
+	* Description  : Function to generate <Bind> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetBind = function(){
+		let sBindDataset = "${VIEW_DATASET}";
+
+		let oBind = [];
+		let oBindItems = [];
+
+		let sCompId
+		let sFieldId;
+		let sCompType;
+		let sCompClassId;
+		let nBindItemCount = this.arrBindItems.length;
+		let sPropid ;
+
+		for(let i=0;i<nBindItemCount;i++) {
+			sCompId			= this.arrBindItems[i].compid;
+			sFieldId		= this.arrBindItems[i].fieldid;
+			sCompType		= this.arrBindItems[i].comptype;
+			sCompClassId	= this.arrBindItems[i].compclassid;
+
+			let oBindItem = {};
+			oBindItem.tag = "BindItem";
+			oBindItem.attribute = {};
+			oBindItem.attribute.id = "bind_"+sCompId;
+			oBindItem.attribute.compid = sCompId;
+			sPropid = "value";
+			if(sCompClassId=="Static" || sCompType == "static"){
+				sPropid = "text";
+			} else if(sCompClassId=="ImageViewer" || sCompType == "imageviewer"){
+				sPropid = "image";
+			} else if(sCompClassId=="WebView" || sCompClassId=="WebBrowser" || sCompType == "webview" || sCompType == "webbrowser"){
+				sPropid = "url";
+			} else if(sCompClassId=="AbstractSelectAny" || sCompType == "selectany"){
+				sPropid = "multivalue";
+			}
+			oBindItem.attribute.propid = sPropid;
+
+			oBindItem.attribute.datasetid = sBindDataset;
+			oBindItem.attribute.columnid = sFieldId;	
+
+			oBindItems[i] = oBindItem;			
+		}
+
+		oBind[oBind.length] = {"tag" : "Bind", "Bind" : oBindItems};
+
+		return oBind;
+	};
+	
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fn_GetScript
+	* Parameter    :
+	* Return       : script contents (JSON format)
+	* Description  : Function to generate <Script> source
+	*---------------------------------------------------------------------------------------------*/
+	this.fn_GetScript = function(){
+		let oScript = {};
+
+		/*
+		oScript =
+		{
+			"tag": "Script",
+			"attribute": { "type" : "xscript5.1" },
+			"value": "this.fn_Alert = function(){window.alert('MESSAGE')};"
+		}
+		*/
+
+		return oScript;
+	};
+	
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : fnClearContents
+	* Return       : 
+	* Description  : Function to contents clear
+	*---------------------------------------------------------------------------------------------*/
+	this.fnClearContents = function()
+	{
+		// Get original Layout information
+		let oLayout = this.oContents.View.View[0].Layouts[0].Layout;
+
+		// Get current Model information
+		let oModel = this.oContents.View.Model;
+		let oComp;
+
+		// If Layout exists
+		if(oLayout) {
+			for (let i = oLayout.length - 1; i >= 0; i--) {
+				if (oLayout[i].attribute && oLayout[i].attribute._fieldid) {
+					// Remove components previously created via ViewTemplate
+					oLayout.splice(i, 1);
+				} else {
+					// Remove user-added components from Layout and append to end of Model
+					oComp = oLayout.splice(i, 1);
+					oModel[oModel.length] = {
+						"fieldid" : "",
+						"Components" : oComp
+					}
+				}
+			}
+		}
+	};
+/*===============================================================================================*/
+/* Model Generation Related Functions                                                            */
+/*===============================================================================================*/
+	this.fn_MakeListView = function(){
+		let oModel = this.oContents.View.Model;
+
+		let oLayout = {};
+		oLayout.tag = "ListView";
+		oLayout.attribute = {};
+		oLayout.attribute.id = "listViewComp";
+		oLayout.attribute.taborder = "0";
+		oLayout.attribute.left = this.VIEW_PADDING_LEFT;
+		oLayout.attribute.top = this.VIEW_PADDING_TOP;
+		oLayout.attribute.right = this.VIEW_PADDING_RIGHT;
+		oLayout.attribute.bottom = this.VIEW_PADDING_BOTTOM;
+		oLayout.attribute.cssclass = "lstv_MF_dashboard";
+		oLayout.attribute.binddataset = "${VIEW_DATASET}";
+		oLayout.attribute.oncellclick = "fn_listViewComp_oncellclick";
+		oLayout.attribute._fieldid = "listViewComp";
+		oLayout.attribute._fieldcomptype = "comp";
+		oLayout.ListView = [];
+			let oListView = {};
+			oListView.tag = "Formats";
+			oListView.Formats = [];
+
+				let oFormats = {};
+				oFormats.tag  = "Format";
+				oFormats.attribute = {"id" : "default"};
+				oFormats.Format = [];
+
+					let oFormat ={};
+					oFormat.tag = "Band";
+					oFormat.attribute = {};
+					oFormat.attribute.id = "body";
+					oFormat.attribute.width = "20%"; // Display 5 items per row
+					oFormat.attribute.height = "100%";
+					oFormat.attribute.cssclass = "lstv_MF_dashboard";
+					oFormat.Band = [];
+
+						let oBody = {};
+						oBody.tag = "Cell";
+						oBody.attribute = {};
+						oBody.attribute.id = "Cell00";
+						oBody.attribute.left = 10;
+						oBody.attribute.top = 10;
+						oBody.attribute.right = 10;
+						oBody.attribute.bottom = 10;
+						oBody.attribute.displaytype = "normal";
+						oBody.attribute.text = "";
+						oBody.attribute.cssclass = "lstv_MF_cellBg";
+					oFormat.Band.push(oBody);
+
+					let oFields = this.oFieldArray.fields;
+					for (let i = 0; i < oFields.length; i++) {
+						let oField = oFields[i];
+
+						let oBody = {};
+						oBody.tag = "Cell";
+						oBody.attribute = {};
+
+						oBody.attribute.id = "Cell_" + oField.id;
+						oBody.attribute.displaytype = "normal";
+						oBody.attribute.text = "bind:" + oField.id;
+
+						if (i === 0) {
+							oBody.attribute.left = 20;
+							oBody.attribute.top = 20;
+							oBody.attribute.right = 20;
+							oBody.attribute.height = 30;
+							oBody.attribute.cssclass = "lstv_MF_name";
+						}
+						else if (i === 1) {
+							oBody.attribute.left = 30;
+							oBody.attribute.top = 60;
+							oBody.attribute.right = 30;
+							oBody.attribute.height = 60;
+							oBody.attribute.cssclass = "lstv_MF_value";
+						}
+						else if (i === 2) {
+							oBody.attribute.left = 30;
+							oBody.attribute.top = 105;
+							oBody.attribute.right = 30;
+							oBody.attribute.height = 20;
+							if (oField.id == 'item_status')
+							{
+								oBody.attribute.cssclass = "expr:" + oField.id + " == 'Alert' ? 'lstv_MF_descA' : (" + oField.id + " == 'Danger' ? 'lstv_MF_descD' : 'lstv_MF_descN')";
+							}
+							else 
+							{
+								oBody.attribute.cssclass = "lstv_MF_descN";
+							}
+						}
+
+						oFormat.Band.push(oBody);
+					}
+
+				oFormats.Format.push(oFormat);	
+			oListView.Formats.push(oFormats);
+		oLayout.ListView.push(oListView);
+
+		oModel[oModel.length] = { "fieldid" : "listView", "Components" : [oLayout]};
+	};
+
+/*===============================================================================================*/
+/* List of functions defined inside the script generated by fn_GetScript
+/*-----------------------------------------------------------------------------------------------*/
+/* Notes: 1. Do not include comments inside these functions.                                      */
+/*        2. Escape characters such as '\r, \n, \t' must not be used.                          */
+/*===============================================================================================*/
+	/*---------------------------------------------------------------------------------------------*
+	* Function     : _fnViewOnLoad
+	* Description  : Handles the onload event processing for the view component
+	*---------------------------------------------------------------------------------------------*/
+	this._fnViewOnLoad = function(objForm){
+		/* Sets the view form reference so that functions declared in the view can access it */
+		this._ownerForm = objForm;
+	};
+]]>
+  </Script>
+  <TestData>
+    <TestFields><![CDATA[{
+    "fields": [
+        {
+            "id": "field1",
+            "label": "Field1",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Boolean",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "truevalue": "Y",
+                "falsevalue": "N"
+            }
+        },
+        {
+            "id": "field2",
+            "label": "Field2",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Date",
+            "datatype": "DATE",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "dataformat": "yyyy-MM-dd"
+            }
+        },
+        {
+            "id": "field3",
+            "label": "Field3",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Time",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field4",
+            "label": "Field4",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "DateTime",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field5",
+            "label": "Field5",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "FromToDate",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field6",
+            "label": "Field6",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Email",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field7",
+            "label": "Field7",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Image",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field8",
+            "label": "Field8",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Label",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field9",
+            "label": "Field9",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Text",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field10",
+            "label": "Field10",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "LongText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field11",
+            "label": "Field11",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiLineText",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field12",
+            "label": "Field12",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Password",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field13",
+            "label": "Field13",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Number",
+            "datatype": "INT",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field14",
+            "label": "Field14",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Phone",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field15",
+            "label": "Field15",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Price",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field16",
+            "label": "Field16",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "Select",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": {
+                "innerdataset_list": [
+                    {
+                        "label": "TOBESOFT",
+                        "value": "01"
+                    },
+                    {
+                        "label": "A Company",
+                        "value": "02"
+                    },
+                    {
+                        "label": "B Company",
+                        "value": "03"
+                    },
+                    {
+                        "label": "C Company",
+                        "value": "04"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "field17",
+            "label": "Field17",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "MultiSelect",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        },
+        {
+            "id": "field18",
+            "label": "Field18",
+            "uselabel": "true",
+            "editable": "true",
+            "fieldtype": "ProgressBar",
+            "datatype": "STRING",
+            "datasize": "100",
+            "required": "false",
+            "description_ENG": "",
+            "description_KOR": "",
+            "description_JPN": "",
+            "options": ""
+        }
+    ]
+}]]>
+    </TestFields>
+    <TestViewProperties><![CDATA[{
+    "attributes": {
+        "titletext": "This is title",
+        "fieldwidth": 250,
+        "labelwidth": 100
+    }
+}]]>
+    </TestViewProperties>
+  </TestData>
+</ViewTemplateInfo>

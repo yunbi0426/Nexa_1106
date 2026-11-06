@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AppVariables version="2.0">
+  <Datasets>
+    <Dataset id="gdsLocale">
+      <ColumnInfo>
+        <Column id="code" type="STRING" size="256"/>
+        <Column id="data" type="STRING" size="256"/>
+      </ColumnInfo>
+      <Rows>
+        <Row>
+          <Col id="code">en</Col>
+          <Col id="data">English</Col>
+        </Row>
+      </Rows>
+    </Dataset>
+  </Datasets>
+  <Variables/>
+  <DataObjects/>
+</AppVariables>

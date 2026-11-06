@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaInfo version="2.0">
+  <Object id="nexacro.CallDatasetFunction">
+    <ObjectInfo finalclass="false" inheritance="nexacro.Action" classname="nexacro.CallDatasetFunction" shorttypename="CallDatasetFunction" csstypename="CallDatasetFunction" csscontrolname="CallDatasetFunctionControl" group="Action" subgroup="ActionBase" manual="extlib::NexaLAP_BasePack/_manual_/objects/CallDatasetFunction.md" csspseudo="" container="false" composite="false" tabstop="false" cssstyle="false" contents="true" formats="false" contentseditor="auto" defaultwidth="" defaultheight="" registration="allow" edittype="action" useinitvalue="false" popup="false" edittypecomponent="" dblclickevent="" requirement="Edge,Chrome,Safari,Firefox,Opera,Windows NRE,macOS NRE,Android NRE,iOS/iPadOS NRE,Android Default Web Browser,iOS/iPadOS Default Web Browser" description="Trigger가 발생하는 시점에 수행하는 Action을 설정합니다." a11yprop=""/>
+    <PropertyInfo>
+      <Property name="targetview" displaytext="View" edittype="String" readonly="false" initonly="false" hidden="true" control="false" expr="false" bind="false" deprecated="false" unused="false" mandatory="false" requirement="Edge,Chrome,Safari,Firefox,Opera,Windows NRE,macOS NRE,Android NRE,iOS/iPadOS NRE,Android Default Web Browser,iOS/iPadOS Default Web Browser" description="Action을 수행할 View 오브젝트를 설정하는 속성입니다." normalpropertyname="targetview" stringrc="false" defaultstringrc="false"/>
+      <Property name="functionList" displaytext="Function list" readonly="false" configurable="true" initonly="false" hidden="false" control="false" expr="false" enumerable="true" bind="false" unused="false" mandatory="false" edittype="Enum" enuminfo="FunctionList" displayinfo="FunctionList"/>
+      <Property name="sourceDataset" displaytext="Source dataset" readonly="false" configurable="true" initonly="false" hidden="false" control="false" expr="false" enumerable="true" bind="false" unused="false" mandatory="false" edittype="DatasetID"/>
+      <Property name="targetDataset" displaytext="Target dataset" readonly="false" configurable="true" initonly="false" hidden="false" control="false" expr="false" enumerable="true" bind="false" unused="false" mandatory="false" edittype="DatasetID"/>
+      <Property name="filterColumn" displaytext="Filter column" readonly="false" configurable="true" initonly="false" hidden="false" control="false" expr="false" enumerable="true" bind="false" unused="false" mandatory="false" group="Action" edittype="ColumnID"/>
+      <Property name="filterValue" displaytext="Filter value" readonly="false" configurable="true" initonly="false" hidden="false" control="false" expr="false" enumerable="true" bind="false" unused="false" mandatory="false" edittype="String" group="Action"/>
+    </PropertyInfo>
+    <CSSInfo>
+      <PropertyInfo/>
+    </CSSInfo>
+    <StatusInfo/>
+    <ControlInfo/>
+    <MethodInfo/>
+    <EventHandlerInfo/>
+    <ContentsInfo contentsformat="json" contentseditor="auto" contentstype="contents" showpreview="false" showobjtree="false" showproperties="false"/>
+  </Object>
+</MetaInfo>
