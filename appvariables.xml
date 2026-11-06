@@ -13,6 +13,26 @@
         </Row>
       </Rows>
     </Dataset>
+    <Dataset id="gdsTest">
+      <ColumnInfo>
+        <Column id="Column0" type="STRING" size="80"/>
+        <Column id="Column1" type="STRING" size="80"/>
+      </ColumnInfo>
+      <Rows>
+        <Row>
+          <Col id="Column0">0</Col>
+          <Col id="Column1">1</Col>
+        </Row>
+        <Row>
+          <Col id="Column0">2</Col>
+          <Col id="Column1">3</Col>
+        </Row>
+        <Row>
+          <Col id="Column0">4</Col>
+          <Col id="Column1">5</Col>
+        </Row>
+      </Rows>
+    </Dataset>
   </Datasets>
   <Variables/>
   <DataObjects/>
