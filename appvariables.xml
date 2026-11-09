@@ -60,6 +60,13 @@
         <Column id="Column2" type="STRING" size="80"/>
       </ColumnInfo>
     </Dataset>
+    <Dataset id="gdsE">
+      <ColumnInfo>
+        <Column id="Column0" type="STRING" size="80"/>
+        <Column id="Column1" type="STRING" size="80"/>
+        <Column id="Column2" type="STRING" size="80"/>
+      </ColumnInfo>
+    </Dataset>
   </Datasets>
   <Variables/>
   <DataObjects/>
