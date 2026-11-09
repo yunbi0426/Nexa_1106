@@ -5,7 +5,9 @@
       <Layout width="1280" height="670">
         <View id="View" left="10" right="10" top="10" bottom="10" text="View">
           <Layouts>
-            <Layout/>
+            <Layout>
+              <Button id="Button00" left="71" top="107" taborder="0" width="120" height="50" text="Button00"/>
+            </Layout>
           </Layouts>
         </View>
       </Layout>
