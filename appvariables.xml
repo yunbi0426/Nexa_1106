@@ -41,6 +41,17 @@
         <Column id="Column3" type="STRING" size="80"/>
       </ColumnInfo>
     </Dataset>
+    <Dataset id="gdsB">
+      <ColumnInfo>
+        <Column id="Column0" type="STRING" size="80"/>
+        <Column id="Column1" type="STRING" size="80"/>
+        <Column id="Column2" type="STRING" size="80"/>
+        <Column id="Column3" type="STRING" size="80"/>
+        <Column id="Column4" type="STRING" size="80"/>
+        <Column id="Column5" type="STRING" size="80"/>
+        <Column id="Column6" type="STRING" size="80"/>
+      </ColumnInfo>
+    </Dataset>
   </Datasets>
   <Variables/>
   <DataObjects/>
