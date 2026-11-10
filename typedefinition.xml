@@ -111,6 +111,7 @@
     <Service prefixid="extlib" type="resource" url="./_extlib_/" version="0" cachelevel="session" include_subdir="true"/>
     <Service prefixid="Base" type="form" url="./Base/" version="0" cachelevel="session" communicationversion="0" include_subdir="true"/>
     <Service prefixid="NexaFrame" type="form" url="./NexaFrame/" version="0" cachelevel="session" include_subdir="true" communicationversion="0"/>
+    <Service prefixid="model" type="model" url="./model/" include_subdir="true" version="0" cachelevel="session" communicationversion="0"/>
   </Services>
   <Protocols/>
   <DeviceAdaptors/>
