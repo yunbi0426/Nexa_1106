@@ -3,7 +3,7 @@
     "version": "1.0",
     "package": "model",
     "name": "svcTest",
-    "alias": "svcTest",
+    "alias": "테스트용",
     "description": ""
   },
   "workflow": [
