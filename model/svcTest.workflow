@@ -3,7 +3,11 @@
     "version": "1.0",
     "package": "model",
     "name": "svcTest",
+<<<<<<< HEAD
     "alias": "svcTest",
+=======
+    "alias": "테스트용",
+>>>>>>> 537c348f45fdefa1f613a8ccc5780f3090ce3781
     "description": ""
   },
   "workflow": [
@@ -40,6 +44,7 @@
   },
   "response": {
     "variables": [],
+<<<<<<< HEAD
     "datasets": [
       {
         "name": "Dataset00",
@@ -72,3 +77,8 @@
     ]
   }
 }
+=======
+    "datasets": []
+  }
+}
+>>>>>>> 537c348f45fdefa1f613a8ccc5780f3090ce3781
