@@ -24,7 +24,7 @@
       "alias": "End",
       "description": "",
       "position": {
-        "x": 1180,
+        "x": 1750,
         "y": 225
       }
     },
@@ -37,7 +37,7 @@
         "y": 225
       },
       "name": "Select1",
-      "next": "end",
+      "next": "If1",
       "usecurrentrow": true,
       "datasource": "",
       "target": "",
@@ -69,6 +69,30 @@
         "width": 550,
         "height": 582
       }
+    },
+    {
+      "alias": "If1",
+      "description": "",
+      "type": "if",
+      "position": {
+        "x": 1180,
+        "y": 225
+      },
+      "name": "If1",
+      "conditions": [
+        {
+          "conditiontype": "if",
+          "condition": "",
+          "description": "",
+          "next": "end"
+        },
+        {
+          "conditiontype": "else",
+          "condition": "",
+          "description": "",
+          "next": ""
+        }
+      ]
     }
   ],
   "comments": [],
