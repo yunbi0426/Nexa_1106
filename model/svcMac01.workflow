@@ -12,7 +12,7 @@
       "type": "start",
       "alias": "Start",
       "description": "",
-      "next": "Select1",
+      "next": "Select2",
       "position": {
         "x": 300,
         "y": 225
@@ -24,7 +24,7 @@
       "alias": "End",
       "description": "",
       "position": {
-        "x": 2990,
+        "x": 3090,
         "y": 225
       }
     },
@@ -33,7 +33,7 @@
       "description": "",
       "type": "sql",
       "position": {
-        "x": 1080,
+        "x": 1180,
         "y": 225
       },
       "name": "Select1",
@@ -75,7 +75,7 @@
       "description": "",
       "type": "procedure",
       "position": {
-        "x": 2320,
+        "x": 2420,
         "y": 225
       },
       "name": "Procedure1",
@@ -90,6 +90,48 @@
       "nodesize": {
         "width": 550,
         "height": 0
+      }
+    },
+    {
+      "alias": "SQL2",
+      "description": "",
+      "type": "sql",
+      "position": {
+        "x": 510,
+        "y": 225
+      },
+      "name": "Select2",
+      "next": "Select1",
+      "usecurrentrow": true,
+      "datasource": "",
+      "target": "",
+      "output": "",
+      "sql": "",
+      "insertquery": "",
+      "updatequery": "",
+      "deletequery": "",
+      "executiontype": "all",
+      "modulename": "workflow.Select",
+      "actiontype": "query",
+      "sqltype": "select",
+      "_designer": {
+        "mode": "designer",
+        "isCustomSql": false,
+        "designerModel": {
+          "activeTab": "select",
+          "selectedColumns": [],
+          "joins": [],
+          "conditions": [],
+          "orderBy": [],
+          "tableSearch": "",
+          "tablePanelsExpanded": true,
+          "conditionLogical": "AND"
+        },
+        "generatedSqlExpanded": true
+      },
+      "nodesize": {
+        "width": 550,
+        "height": 582
       }
     }
   ],
