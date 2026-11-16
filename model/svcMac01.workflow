@@ -24,7 +24,7 @@
       "alias": "End",
       "description": "",
       "position": {
-        "x": 1750,
+        "x": 2420,
         "y": 225
       }
     },
@@ -84,7 +84,7 @@
           "conditiontype": "if",
           "condition": "",
           "description": "",
-          "next": "end"
+          "next": "Procedure1"
         },
         {
           "conditiontype": "else",
@@ -93,6 +93,28 @@
           "next": ""
         }
       ]
+    },
+    {
+      "alias": "Procedure1",
+      "description": "",
+      "type": "procedure",
+      "position": {
+        "x": 1750,
+        "y": 225
+      },
+      "name": "Procedure1",
+      "next": "end",
+      "datasource": "",
+      "target": "",
+      "sql": "",
+      "request": [],
+      "response": {
+        "columnmapping": []
+      },
+      "nodesize": {
+        "width": 550,
+        "height": 0
+      }
     }
   ],
   "comments": [],
