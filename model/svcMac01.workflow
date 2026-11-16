@@ -12,7 +12,7 @@
       "type": "start",
       "alias": "Start",
       "description": "",
-      "next": "Select1",
+      "next": "If2",
       "position": {
         "x": 300,
         "y": 225
@@ -24,7 +24,7 @@
       "alias": "End",
       "description": "",
       "position": {
-        "x": 2420,
+        "x": 2990,
         "y": 225
       }
     },
@@ -33,7 +33,7 @@
       "description": "",
       "type": "sql",
       "position": {
-        "x": 510,
+        "x": 1080,
         "y": 225
       },
       "name": "Select1",
@@ -75,7 +75,7 @@
       "description": "",
       "type": "if",
       "position": {
-        "x": 1180,
+        "x": 1750,
         "y": 225
       },
       "name": "If1",
@@ -99,7 +99,7 @@
       "description": "",
       "type": "procedure",
       "position": {
-        "x": 1750,
+        "x": 2320,
         "y": 225
       },
       "name": "Procedure1",
@@ -115,6 +115,30 @@
         "width": 550,
         "height": 0
       }
+    },
+    {
+      "alias": "If2",
+      "description": "",
+      "type": "if",
+      "position": {
+        "x": 510,
+        "y": 225
+      },
+      "name": "If2",
+      "conditions": [
+        {
+          "conditiontype": "if",
+          "condition": "",
+          "description": "",
+          "next": "Select1"
+        },
+        {
+          "conditiontype": "else",
+          "condition": "",
+          "description": "",
+          "next": ""
+        }
+      ]
     }
   ],
   "comments": [],
