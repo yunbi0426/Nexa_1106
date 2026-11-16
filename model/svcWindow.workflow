@@ -2,8 +2,8 @@
   "file": {
     "version": "1.0",
     "package": "model",
-    "name": "aWorklfow",
-    "alias": "aWorklfow",
+    "name": "svcWindow",
+    "alias": "svcWindow",
     "description": ""
   },
   "workflow": [
